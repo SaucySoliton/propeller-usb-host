@@ -76,7 +76,7 @@ PUB logStatus(code)
   term.dec(result := code)
   if result == E_PID
     term.char(":")
-    term.hex(hc.LastPIDError, 4)
+    term.bin(hc.LastPIDError, 16)
   if result < 0
     abort
 
