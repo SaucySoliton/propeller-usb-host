@@ -1315,6 +1315,10 @@ codec_cnt     call      #enc_reset
               ' late.
 
 cmdret
+              ' Reduce jitter between spin code and the USB packets, for experiments where that matters
+              waitvid   v_palette, v_idle
+              waitvid   v_palette, v_idle
+              
               wrlong    c_zero, par
               andn      outa, c_00010000
 
@@ -1615,7 +1619,7 @@ txrx
 
               mov       t1, tx_count_raw
               shl       t1, #3                  ' 8 cycles per bit
-              add       t1, #$50                ' Constant offset
+              add       t1, #$64                ' Constant offset, > EOP + bus settling, < reply
               add       t1, cnt
         if_c  wrlong    t1, txp_rx1_time
         if_c  wrlong    t1, txp_rx2_time
@@ -2127,6 +2131,7 @@ rx_cog_1
               wrlong    rx1_zero, par           ' One-shot, zero it.
 
               waitcnt   t2, #0                  ' Wait for trigger time
+
 
               ' Now synchronize to the beginning of the next packet.
               ' We sample only D- in the receiver. If we time out,
