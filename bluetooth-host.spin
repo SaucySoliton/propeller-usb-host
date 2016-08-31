@@ -12,7 +12,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -31,12 +31,12 @@ CON
   COD_Computer_Server    = $000108
   COD_Computer_Laptop    = $00010C
   COD_Computer_Handheld  = $000110
-  COD_Computer_Palm      = $000114  
+  COD_Computer_Palm      = $000114
   COD_Phone              = $000200
   COD_Phone_Cellular     = $000204
   COD_Phone_Cordless     = $000208
   COD_Phone_Smart        = $00020C
-  COD_Phone_Modem        = $000210  
+  COD_Phone_Modem        = $000210
   COD_LAN                = $000300
   COD_Audio              = $000400
   COD_Audio_Headset      = $000404
@@ -55,7 +55,7 @@ CON
   PSM_AVCTP              = $0017
   PSM_AVDTP              = $0019
   PSM_DynamicBase        = $1001
-  
+
   ' Other Bluetooth constants
 
   BDADDR_LEN = hci#BDADDR_LEN
@@ -68,13 +68,13 @@ CON
   C_HCI_WrLocalName     = 3
   C_HCI_WrLocalClass    = 4
   C_HCI_Inquiry         = 5
-  
+
   ' Various timeouts
 
   ENUM_TIMEOUT_MS    = 10000
   HCI_TIMEOUT_MS     = 250
   HCI_RETRIES        = 10
-  
+
   ' L2CAP Local Channel ID (LCID) Table: Stored information
   ' about each active L2CAP connection. To save memory, we have a
   ' single global table of L2CAP channels, and we hand out unique
@@ -107,9 +107,9 @@ CON
   CI_BDADDR          = 0
   CI_CID             = 6
   CI_LEN             = 8      ' Must be a multiple of 4
-  
+
   CI_TABLE_SIZE      = 4      ' Max number of open device connections
-  
+
   ' Inquiry table: Stored information about discoverable Bluetooth
   ' devices nearby, which we've discovered as the result of an Inquiry
   ' command.
@@ -117,7 +117,7 @@ CON
   IT_BDADDR          = 0
   IT_CLASS           = 6
   IT_LEN             = 9
-  
+
   IT_TABLE_SIZE      = 8      ' Max number of devices we can discover
 
   ' Buffer structure: This is a public structure that defines a hub-memory
@@ -128,7 +128,7 @@ CON
   RING_ENQUEUE       = 4      ' First empty byte/datagram slot for writing
   RING_DEQUEUE       = 6      ' Oldest non-empty byte/datagram slot
   RING_LEN           = 8
-  
+
   ' Socket table: One entry for each open or potentially-open L2CAP or
   ' RFCOMM connection.
 
@@ -139,7 +139,7 @@ CON
 
   ST_PORT            = 2      ' RFCOMM channel or L2CAP PSM
   ST_PORT_L2CAP      = $80    '   OR'ed with ST_PORT to indicate an L2CAP socket
-  
+
   ST_DATAGRAM        = 3      ' Minimum datagram size. All socket reads/writes are
                               '   padded to this size, so the socket can be used
                               '   as a datagram queue rather than a byte queue.
@@ -147,19 +147,19 @@ CON
 
   ST_RX_CREDITS      = 4      ' Receive flow control credits (us -> peer)
   ST_TX_CREDITS      = 5      ' Transmit flow control credits (peer -> us)
-  
+
   ST_RX_RING         = 6      ' Ring structure pointers, or 0 if ring is disabled
   ST_TX_RING         = 8
 
   ST_FLAGS           = 10
-  
+
   ST_LEN             = 12
   ST_TABLE_SIZE      = 8      ' Max number of sockets
 
   ' ST_FLAGS
 
   STF_CONNECTED      = $0001  ' Connection fully established
-  
+
   ' L2CAP: Basic header
 
   L2CAP_SIZE         = hci#ACL_HEADER_LEN
@@ -168,12 +168,12 @@ CON
   L2CAP_HEADER_LEN   = 4
 
   ' L2CAP: Connectionless data (G-frame)
-  
+
   L2CAP_G_CHANNEL    = $0002
   L2CAP_G_PSM        = L2CAP_CHANNEL + 2
   L2CAP_G_DATA       = L2CAP_G_PSM + 2
   L2CAP_G_DATA_MAX   = hci#ACL_PACKET_SIZE - L2CAP_G_DATA
-  
+
   ' L2CAP: Connection-oriented data (S-frame and I-frame)
 
   L2CAP_SI_DATA      = L2CAP_CHANNEL + 2
@@ -224,7 +224,7 @@ CON
   ' without exceeding one USB packet.
 
   RFCOMM_MTU            = RFCOMM_DATA_MAX - 1
-  
+
   ' RFCOMM: Address Field
 
   RFCOMM_EA             = $01
@@ -245,7 +245,7 @@ CON
 
   RFCOMM_LEN_EA         = $01   ' Extended (16-bit) length
   RFCOMM_LEN_SHIFT      = 1
-  
+
   ' RFCOMM: MCC Type field
 
   RFCOMM_MCCT_MASK      = $FC
@@ -271,7 +271,7 @@ CON
   SDPPDU_SIZE           = SDPPDU_TRANSACTION + 2
   SDPPDU_DATA           = SDPPDU_SIZE + 2
   SDPPDU_DATA_MAX       = hci#ACL_PACKET_SIZE - SDPPDU_DATA
-  
+
   ' SDP: PDU Types
 
   SDP_ErrorResponse      = $01
@@ -321,7 +321,7 @@ CON
   DE_Uint8        = DE_Unsigned | DE_1Byte
   DE_Uint16       = DE_Unsigned | DE_2Bytes
   DE_Uint32       = DE_Unsigned | DE_4Bytes
-  DE_Int8         = DE_Signed | DE_1Byte                  
+  DE_Int8         = DE_Signed | DE_1Byte
   DE_Int16        = DE_Signed | DE_2Bytes
   DE_Int32        = DE_Signed | DE_4Bytes
   DE_UUID16       = DE_UUID | DE_2Bytes
@@ -329,7 +329,7 @@ CON
   DE_UUID128      = DE_UUID | DE_16Bytes
   DE_Text8        = DE_Text | DE_Size8
   DE_Seq8         = DE_Sequence | DE_Size8
-  
+
 DAT
 
 serverStack   long  0[192]
@@ -345,15 +345,15 @@ svcListHead   word  0           ' Linked list of service records
 svcListSize   word  0           ' Size of all service lists
 pinCodePtr    word  0
 
-aclFragmented byte  0           ' Currently buffering a fragmented ACL packet             
+aclFragmented byte  0           ' Currently buffering a fragmented ACL packet
 pinCodeLen    byte  0
 hciStatus     byte  0           ' Status code from last HCI command
-addrStringBuf byte  0[18]       ' Buffer for AddressToString 
+addrStringBuf byte  0[18]       ' Buffer for AddressToString
 localAddr     byte  0[BDADDR_LEN]
 inqCount      byte  0           ' Number of devices found so far
 inqInProgress byte  0           ' Inquiry in progress?
 inqTable      byte  0[IT_TABLE_SIZE * IT_LEN]
-  
+
 DAT
 ''
 ''
@@ -430,18 +430,18 @@ initTable
   byte  hci#CB_WritePageTimeout, hci#CB, 2, 8192 & $FF, 8192 >> 8
 
   ' Default link policy settings: Allow all LM modes (rswitch, hold, sniff, park)
-  byte  hci#LP_WriteDefaultLPSettings, hci#LP, 2, $0F, $00 
+  byte  hci#LP_WriteDefaultLPSettings, hci#LP, 2, $0F, $00
 
   ' Fixed PIN code (We currently assume there's no user interface
   ' for entering variable PIN codes.)
   byte  hci#CB_WritePINType, hci#CB, 1, $01
-                               
+
   ' Enable authentication for all connections
   byte  hci#CB_WriteAuthenticationEnable, hci#CB, 1, $01
 
   ' Enable encryption for all connections
   byte  hci#CB_WriteEncryptionMode, hci#CB, 1, $01
-  
+
   byte  0
 
 PUB GetLastError
@@ -449,7 +449,7 @@ PUB GetLastError
 
   result := ~~serverError
   serverError~
-  
+
 PUB SetDiscoverable
   '' Make this Bluetooth device discoverable by other devices
 
@@ -464,7 +464,7 @@ PUB SetClass(class)
   '' Set the local device's class, as a packed 24-bit constant.
   '' You can use the standard COD_* constants from this object,
   '' or you can follow the Bluetooth spec in creating a custom
-  '' COD for your device. 
+  '' COD for your device.
 
   HCIWait(constant(C_HCI_WrLocalClass << 24) | class)
 
@@ -486,7 +486,7 @@ PUB AddService(service)
   '' (Yes, this gets a bit complicated... see the accompanying examples.
   '' It may also help to read the Bluetooth SDP spec if you plan to alter
   '' service records or write your own.)
-  
+
   WORD[service] := svcListHead
   svcListHead := service
   svcListSize += SkipDE(service += 2) - service
@@ -531,10 +531,10 @@ PUB DiscoverDevices(duration)
 
   inqCount~
   longfill(@inqTable, 0, constant(IT_TABLE_SIZE * IT_LEN / 4))
-  
+
   HCIWait(constant(C_HCI_Inquiry << 24) | duration)
   inqInProgress~~
-  
+
 PUB DiscoveryInProgress
   '' Returns nonzero as long as an asynchronous device discovery
   '' is in progress. If the discovery has finished because it has
@@ -592,10 +592,10 @@ PUB ListenRFCOMM(channelId, rxRing, txRing) : ptr
   WORD[ptr + ST_RX_RING] := rxRing
   WORD[ptr + ST_TX_RING] := txRing
 
-  ' Writing the port activates this socket.      
+  ' Writing the port activates this socket.
   ' Note that ST_PORT includes the D (direction) bit. 0=server.
   BYTE[ptr + ST_PORT] := channelId << 1
-  
+
 PUB SocketFree(ptr)
   '' Free a socket, making it available for reuse.
 
@@ -607,14 +607,14 @@ PUB SocketPeer(ptr)
   '' If it's bound, returns a pointer to the peer's BDADDR.
 
   if result := WORD[ptr]                    ' ST_CHANNEL
-    return ConnectionAddress(WORD[result])  ' LCI_CONN_ID 
-    
+    return ConnectionAddress(WORD[result])  ' LCI_CONN_ID
+
 PRI ConnectionAddress(cid) | ptr
   ' Return a pointer to the Bluetooth address for a particular connection ID.
   '
   ' If the connection doesn't exist, aborts with E_NO_CONNECTION.
   ' Note that connections can be torn down at any time, so the caller
-  ' must always handle this error somehow. 
+  ' must always handle this error somehow.
 
   ptr := @connTable
   repeat CI_TABLE_SIZE
@@ -645,7 +645,7 @@ PRI FindBoundSocket(channel, port) : ptr
       return
     ptr += ST_LEN
 
-  abort hci#E_NO_SOCKET 
+  abort hci#E_NO_SOCKET
 
 PRI SocketRXWrite(socket, ptr, len) | ring, ringMask, ringEnq, ringBase, chunk
   ' Internal function for storing received data in a socket's
@@ -655,7 +655,7 @@ PRI SocketRXWrite(socket, ptr, len) | ring, ringMask, ringEnq, ringBase, chunk
     ringBase := WORD[ring]
     ringMask := WORD[ring + RING_MASK]
     ringEnq := WORD[ring + RING_ENQUEUE]
-    
+
     repeat while len
       chunk := len <# (ringMask + 1 - ringEnq)
       bytemove(ringBase + ringEnq, ptr, chunk)
@@ -675,7 +675,7 @@ PRI SocketTXRead(socket, ptr, len) : actual | ring, ringMask, ringDeq, ringBase,
       ringBase := WORD[ring]
       ringMask := WORD[ring + RING_MASK]
       ringDeq := WORD[ring + RING_DEQUEUE]
-    
+
       repeat while len
         chunk := len <# (ringMask + 1 - ringDeq)
         bytemove(ptr, ringBase + ringDeq, chunk)
@@ -688,7 +688,7 @@ PRI SocketTXRead(socket, ptr, len) : actual | ring, ringMask, ringDeq, ringBase,
 PRI RingByteCount(ring)
   ' Return the number of bytes queued in a ring
 
-  return (WORD[ring + RING_ENQUEUE] - WORD[ring + RING_DEQUEUE]) & WORD[ring + RING_MASK]  
+  return (WORD[ring + RING_ENQUEUE] - WORD[ring + RING_DEQUEUE]) & WORD[ring + RING_MASK]
 
 PRI RingBytesFree(ring)
   ' Return the number of usable free bytes in a ring
@@ -721,7 +721,7 @@ PUB AddressToString(addr) | pIn, pOut, octet
       if addr > 0
         BYTE[pOut++] := lookupz((octet <-= 4) & $F : "0".."9", "A".."F")
       else
-        BYTE[pOut++] := "-" 
+        BYTE[pOut++] := "-"
     BYTE[pOut++] := ":"
   BYTE[--pOut] := 0
   return @addrStringBuf
@@ -771,7 +771,7 @@ PRI HCIWait(c) | deadline
     deadline := cnt + clkfreq/1000 * HCI_TIMEOUT_MS
     repeat while (cnt - deadline) < 0 and hciCommand
 
-    if not (hciCommand or hciStatus) 
+    if not (hciCommand or hciStatus)
       return 0  ' Success
 
   if hciCommand
@@ -786,7 +786,7 @@ PRI Server | err
     err := \ServerPoll
     if err < 0
       serverError := err
-    
+
 PRI ServerPoll | tmp, bdaddr
   ' Poll all event sources:
   '    - Server Commands
@@ -795,7 +795,7 @@ PRI ServerPoll | tmp, bdaddr
 
   if serverCmd
     case serverCmd >> 24
-  
+
       C_HCI_Generic:
         ' Generic execution of an HCI command from hub memory.
         ' Parameter is a pointer to: command type word, parameter count byte, params.
@@ -834,7 +834,7 @@ PRI ServerPoll | tmp, bdaddr
 
     hci#EV_CommandComplete:
       hci.Evt8                    ' Number of commands we can send
-      if hci.Evt16 == hciCommand  ' Command type 
+      if hci.Evt16 == hciCommand  ' Command type
         hciStatus := hci.Evt8     ' Command status
 
         ' Take any command-specific actions on receiving a response
@@ -842,10 +842,10 @@ PRI ServerPoll | tmp, bdaddr
 
           hci#CB_Reset:
             aclFragmented~
-        
+
           hci#IP_ReadBDAddr:
             bytemove(@localAddr, hci.EvtBuffer(BDADDR_LEN), BDADDR_LEN)
-        
+
         hciCommand~  ' HCIWait is now complete
 
     hci#EV_CommandStatus:
@@ -860,8 +860,8 @@ PRI ServerPoll | tmp, bdaddr
       hci.CmdBegin(hci#LC_AcceptConnRequest)
       hci.CmdBDADDR(hci.EvtBuffer(BDADDR_LEN))
       hci.Cmd8($00)               ' Try to become the connection master
-      hci.CmdSend      
-        
+      hci.CmdSend
+
     hci#EV_ConnComplete:
       if hci.Evt8 == 0            ' Connection status (0=success)
         tmp := hci.Evt16          ' Connection handle, BDADDR
@@ -899,7 +899,7 @@ PRI ServerPoll | tmp, bdaddr
       keyring.StoreKey(bdaddr, hci.EvtBuffer(keyring#KEY_LEN))
 
     hci#EV_PINCodeRequest:
-      if tmp := pinCodePtr               
+      if tmp := pinCodePtr
         hci.CmdBegin(hci#LC_PINCodeRequestReply)
         hci.CmdBDADDR(hci.EvtBuffer(BDADDR_LEN))
         hci.Cmd8(pinCodeLen)
@@ -918,15 +918,15 @@ PRI ServerPoll | tmp, bdaddr
       hci#R_FRAGMENTED:
         ' Continuing a fragmented packet. Ties up the ACL buffer until done.
         aclFragmented := 1
-        
+
       hci#R_COMPLETE:
         ' Finished a full packet. Complete it.
-        aclFragmented~      
+        aclFragmented~
         ACLReceive
 
   ' Things we can do only when the ACL buffer is free:
   if not aclFragmented
-  
+
     ' Poll for sockets that need to transmit
     tmp := @socketTable
     repeat ST_TABLE_SIZE
@@ -936,7 +936,7 @@ PRI ServerPoll | tmp, bdaddr
         else
           RFCOMMSocketPoll(tmp)
       tmp += ST_LEN
-        
+
 PRI NewConnection(cid, bdAddr) | ptr
   ' A new incoming connection was established.
   ' Find an unused connection table entry, and initialize it.
@@ -951,7 +951,7 @@ PRI EndConnection(cid) | lcid, ptr
   ' is no longer in use.
 
   bytefill(ConnectionAddress(cid), 0, CI_LEN)
-  
+
   ' Free all L2CAP channels associated with this connection
   repeat lcid from CID_FIRST to CID_LAST
     ptr := L2ChannelPtr(lcid)
@@ -971,7 +971,7 @@ PRI StoreInquiryResult | numResults, i, ptr
 
     ' Ignore the Page_Scan_Repetition_Mode and the two Reserved arrays.
     hci.EvtBuffer(numResults * 3)
-  
+
     ' Class array
     repeat i from 0 to numResults-1
       bytemove(DiscoveredAddr(inqCount + i) + IT_CLASS, hci.EvtBuffer(3), 3)
@@ -985,15 +985,15 @@ DAT
 ' ACL Layer Implementation
 '==============================================================================
 
-PRI ACLReceive | cid, len, lcid    
+PRI ACLReceive | cid, len, lcid
   ' Handle a single received ACL packet from the HCI.
   ' We know that the packet isn't fragmented, and we know
   ' the ACL length and L2CAP lengths are valid.
 
   ' First word of the ACL header has the connection ID and the ACL flags.
   ' Make sure it's point-to-point, and extract the connection ID itself.
-  
-  cid := WORD[@aclBuffer + hci#ACL_HANDLE]  
+
+  cid := WORD[@aclBuffer + hci#ACL_HANDLE]
   if cid & hci#ACL_BC_MASK
     abort hci#E_BROADCAST
   cid &= hci#ACL_HANDLE_MASK
@@ -1043,15 +1043,15 @@ DAT
 PRI L2ChannelPtr(lcid)
   ' Return a pointer to the Local Channel Info table row
   ' for a channel with ID "lcid". Validates the range of lcid only.
-  
+
   lcid -= CID_FIRST
   if lcid => LCI_TABLE_SIZE
     abort hci#E_BAD_CHANNEL
 
   return @lciTable + lcid * LCI_LEN
-    
+
 PRI L2ChannelLookupACL(lcid)
-  ' Look up and validate an entry in the Local Channel Info table. 
+  ' Look up and validate an entry in the Local Channel Info table.
   ' The connection ID must match the current ACL packet.
 
   result := L2ChannelPtr(lcid)
@@ -1077,11 +1077,11 @@ PRI L2ChannelNewACL(psm, rcid) : lcid | ptr
       return
 
   abort hci#E_NO_CHANNELS
- 
+
 PRI L2SignalReceive | psm, scid, dcid
   ' Received an L2CAP Signalling packet.
   ' Handle the packet according to its 8-bit code.
-  
+
   case BYTE[@aclBuffer + L2CAP_SIG_CODE]
 
     L2SIG_EchoRequest:
@@ -1100,14 +1100,14 @@ PRI L2SignalReceive | psm, scid, dcid
       scid := WORD[@aclBuffer + constant(L2CAP_SIG_DATA + 2)]
       WORD[@aclBuffer + constant(L2CAP_SIG_DATA + 0)] := L2ChannelNewACL(psm, scid)
       LONG[@aclBuffer + constant(L2CAP_SIG_DATA + 4)] := 0 ' Connection successful
-      L2SignalTransmit(L2SIG_ConnResponse, 8)                         
+      L2SignalTransmit(L2SIG_ConnResponse, 8)
 
     L2SIG_DisconnRequest:
       dcid := WORD[@aclBuffer + constant(L2CAP_SIG_DATA + 0)]
       L2ChannelLookupACL(dcid)  ' Validate channel for this connection
       L2ChannelFree(dcid)
       L2SignalTransmit(L2SIG_DisconnResponse, 4)
-    
+
     L2SIG_CfgRequest:
       ' Currently this just always returns success without examining the configuration
       dcid := WORD[@aclBuffer + constant(L2CAP_SIG_DATA + 0)]
@@ -1115,7 +1115,7 @@ PRI L2SignalReceive | psm, scid, dcid
       WORD[@aclBuffer + constant(L2CAP_SIG_DATA + 0)] := scid
       WORD[@aclBuffer + constant(L2CAP_SIG_DATA + 4)] := $0000 ' Success
       L2SignalTransmit(L2SIG_CfgResponse, 6)
-                                                        
+
       ' To complete configuration, both sides of the connection have to
       ' request configuration. Take this opportunity to send our request
       ' to the other side.
@@ -1123,10 +1123,10 @@ PRI L2SignalReceive | psm, scid, dcid
 
     L2SIG_CfgResponse:
       ' Ignore the other side's response to our CfgRequest.
-     
-    other:      
+
+    other:
       WORD[@aclBuffer + L2CAP_SIG_DATA] := 0 ' Command not understood
-      L2SignalTransmit(L2SIG_CmdReject, 2)       
+      L2SignalTransmit(L2SIG_CmdReject, 2)
 
 PRI L2SignalTransmit(type, len)
   ' Send an L2CAP Signalling packet.
@@ -1146,7 +1146,7 @@ PRI L2SignalTransmit(type, len)
 PRI L2ChannelReceive(lcid) | channel
   ' Received an L2CAP packet on a connection-oriented channel.
   ' Dispatch it to a connection-specific handler.
-  
+
   channel := L2ChannelLookupACL(lcid)
   case BYTE[channel + LCI_PSM]
 
@@ -1159,7 +1159,7 @@ PRI L2ChannelReceive(lcid) | channel
 PRI L2ChannelTransmit(channel, len)
   ' Send an L2CAP connection-oriented packet.
   ' Writes all fields in the L2CAP and ACL header.
-                                      
+
   WORD[@aclBuffer + L2CAP_SIZE] := len
   WORD[@aclBuffer + L2CAP_CHANNEL] := WORD[channel + LCI_REMOTE_CID]
 
@@ -1176,7 +1176,7 @@ PRI RFCOMMReceive(channel) | address, len, ptr, control, txCredits, socket
   ' Handle one incoming L2CAP packet for the RFCOMM PSM.
 
   ' Check header
-  
+
   address := BYTE[@aclBuffer + RFCOMM_ADDRESS]
   len := BYTE[@aclBuffer + RFCOMM_LEN]
 
@@ -1189,9 +1189,9 @@ PRI RFCOMMReceive(channel) | address, len, ptr, control, txCredits, socket
   address >>= RFCOMM_DLCI_SHIFT                              ' Extract DLCI portion of Address
 
   ' Handle each ETSI 07.10 frame type
-  
+
   case (control := BYTE[@aclBuffer + RFCOMM_CONTROL]) & RFCOMM_TYPE_MASK
-  
+
     RFCOMM_TYPE_SABM:
       ' Set Asynchronous Balanced Mode (Establish connection)
 
@@ -1210,10 +1210,10 @@ PRI RFCOMMReceive(channel) | address, len, ptr, control, txCredits, socket
     RFCOMM_TYPE_DISC:
       ' Disconnect request
       RFCOMMTransmit(channel, constant(RFCOMM_TYPE_UA | RFCOMM_PF), 0, 0)   ' Acknowledge
-  
+
     RFCOMM_TYPE_UIH:
       ' Unnumbered information (data frame).
-      
+
       ' With credit-based flow control, any UIH frame can include a
       ' count of additional transmit credits for us. So we may need
       ' to strip this byte off the beginning of the packet before
@@ -1226,7 +1226,7 @@ PRI RFCOMMReceive(channel) | address, len, ptr, control, txCredits, socket
         txCredits := BYTE[ptr++]
 
       BYTE[@aclBuffer + RFCOMM_ADDRESS] ^= RFCOMM_CR   ' Flip command/response bit
-                                       
+
       if address == 0
         ' DLCI 0: Multiplexer Control Channel
         RFCOMMReceiveMCC(channel, ptr, len)
@@ -1256,7 +1256,7 @@ PRI RFCOMMSendMSC(channel, address)
   BYTE[@aclBuffer + RFCOMM_MCC_DATA] := (address << 2) | %11
   BYTE[@aclBuffer + constant(RFCOMM_MCC_DATA + 1)] := %1000_1101
   RFCOMMTransmitMCC(channel, constant(RFCOMM_MCC_EA | RFCOMM_MCC_CR | RFCOMM_MCCT_MSC), 2)
-  
+
 PRI RFCOMMSocketPoll(socket) | rxCredits, txBytes
   ' Poll for action on an RFCOMM socket. Transmits packets and/or issues more RX credits.
   ' Must be called only on RFCOMM sockets which are bound and connected!
@@ -1269,22 +1269,22 @@ PRI RFCOMMSocketPoll(socket) | rxCredits, txBytes
     rxCredits := (MaxRXCredits(socket) - BYTE[socket + ST_RX_CREDITS]) #> 0
     BYTE[socket + ST_RX_CREDITS] += rxCredits
     BYTE[@aclBuffer + RFCOMM_DATA] := rxCredits
-    
+
     ' Send data only if we have a TX credit available. If so, this consumes a credit.
     if BYTE[socket + ST_TX_CREDITS]
       if txBytes := SocketTXRead(socket, @aclBuffer + constant(RFCOMM_DATA + 1), constant(RFCOMM_DATA_MAX - 2))
         BYTE[socket + ST_TX_CREDITS]--
     else
       txBytes~
-    
+
     if not (rxCredits or txBytes)
       ' No need to send credits or data
       return
 
     ' Send one UIH packet with credit prefix
-    BYTE[@aclBuffer + RFCOMM_ADDRESS] := RFCOMM_EA | (BYTE[socket + ST_PORT] << RFCOMM_DLCI_SHIFT) 
+    BYTE[@aclBuffer + RFCOMM_ADDRESS] := RFCOMM_EA | (BYTE[socket + ST_PORT] << RFCOMM_DLCI_SHIFT)
     RFCOMMTransmit(WORD[socket], constant(RFCOMM_PF | RFCOMM_TYPE_UIH), txBytes, txBytes + 1)
-    
+
 PRI RFCOMMTransmit(channel, control, reportedLen, actualLen) | crcLen, ptr, crc, b
   ' Send an RFCOMM frame.
   '
@@ -1296,7 +1296,7 @@ PRI RFCOMMTransmit(channel, control, reportedLen, actualLen) | crcLen, ptr, crc,
   '
   ' "actualLen" is the actual length of the RFCOMM payload, including all data
   ' bytes but not the CRC.
-  
+
 
   crcLen := 3
   if (control & RFCOMM_TYPE_MASK) == RFCOMM_TYPE_UIH
@@ -1328,7 +1328,7 @@ DAT
 
 crc8Table byte $00, $1c, $38, $24, $70, $6c, $48, $54
           byte $e0, $fc, $d8, $c4, $90, $8c, $a8, $b4
-  
+
 PRI MaxRXCredits(socket) | ring
   ' Calculate how many receive credits we're allowed to have outstanding.
   ' This is based on a lower bound of the remaining socket buffer space,
@@ -1362,11 +1362,11 @@ PRI RFCOMMReceiveMCC(channel, ptr, len) | socket
       ' Don't complain if the socket is unsupported, we'll have the opportunity
       ' to reject it when we handle SABM.
       if (socket := \FindBoundSocket(channel, BYTE[@aclBuffer + RFCOMM_MCC_DATA])) > 0
-    
+
         ' RFCOMM completely redefines the CL1-CL4 bits, and uses them to detect
         ' support for credit-based flow control. If and only if these bits are 15
         ' we must set them to 14. We can operate on the whole byte here, since
-        ' the other nybble (I1-4) is required to be zero in RFCOMM. 
+        ' the other nybble (I1-4) is required to be zero in RFCOMM.
         if BYTE[@aclBuffer + constant(RFCOMM_MCC_DATA + 1)] == $F0
           BYTE[@aclBuffer + constant(RFCOMM_MCC_DATA + 1)] := $E0
 
@@ -1376,15 +1376,15 @@ PRI RFCOMMReceiveMCC(channel, ptr, len) | socket
 
           ' Unconnected until SABM
           BYTE[socket + ST_FLAGS]~
-          
+
           ' Give out some initial flow control credits
           BYTE[@aclBuffer + constant(RFCOMM_MCC_DATA + 7)] := BYTE[socket + ST_RX_CREDITS] := MaxRXCredits(socket) <# 7
 
       ' Set the MTU such that we don't need any fragmented ACL or L2CAP packets
       BYTE[@aclBuffer + constant(RFCOMM_MCC_DATA + 4)] := RFCOMM_MTU
       BYTE[@aclBuffer + constant(RFCOMM_MCC_DATA + 5)]~
-      
-      RFCOMMTransmitMCC(channel, constant(RFCOMM_MCC_EA | RFCOMM_MCCT_PN), 8)                  
+
+      RFCOMMTransmitMCC(channel, constant(RFCOMM_MCC_EA | RFCOMM_MCCT_PN), 8)
 
     ' Modem status command.
     ' Currently we ignore the other end's status, and just reciprocate
@@ -1399,7 +1399,7 @@ PRI RFCOMMReceiveMCC(channel, ptr, len) | socket
     constant(RFCOMM_MCC_EA | RFCOMM_MCCT_MSC):
       if (socket := \FindBoundSocket(channel, BYTE[@aclBuffer + RFCOMM_MCC_DATA] >> 2)) > 0
         BYTE[socket + ST_FLAGS] |= STF_CONNECTED
-    
+
     ' Remote Port Negotiation.
     ' We need to reply to this, but we mostly ignore it. This is where
     ' we get serial port settings, useful only when RFCOMM is actually
@@ -1407,11 +1407,11 @@ PRI RFCOMMReceiveMCC(channel, ptr, len) | socket
     ' settings that the peer asks for.
     constant(RFCOMM_MCC_EA | RFCOMM_MCC_CR | RFCOMM_MCCT_RPN):
       RFCOMMTransmitMCC(channel, constant(RFCOMM_MCC_EA | RFCOMM_MCCT_RPN), 8)
-     
+
     ' Anything else: Respond that this is a non-supported command
     other:
       BYTE[@aclBuffer + RFCOMM_MCC_DATA] := BYTE[@aclBuffer + RFCOMM_MCC_TYPE]
-      RFCOMMTransmitMCC(channel, constant(RFCOMM_MCC_EA | RFCOMM_MCCT_NSC), 1)                  
+      RFCOMMTransmitMCC(channel, constant(RFCOMM_MCC_EA | RFCOMM_MCCT_NSC), 1)
 
 PRI RFCOMMTransmitMCC(channel, type, len)
   ' Transmit a Multiplexer Controll Channel RFCOMM frame.
@@ -1435,7 +1435,7 @@ DAT
 ' server, with a searchable service record database, DataElement
 ' decoding and encoding, and a public function to link your own
 ' new service records into our database.
-' 
+'
 ' But all of that functionality uses a lot of RAM, and hardly any of it
 ' actually gets used. Of the three transaction types described by SDP,
 ' I've only seen PCs ever send one of them- and our service records
@@ -1513,14 +1513,14 @@ PRI SDPProcessPDU : len | inPtr, inEnd, outPtr, outEnd, contIn, contOut, service
   ' 2-byte maximum attribute list length, and an attribute ID list
   ' data element. The continuation data is a 1-byte length followed
   ' by server-defined data. For us, this is always a 16-bit value or
-  ' nothing at all. 
+  ' nothing at all.
 
   inPtr := SkipDE(SkipDE(@aclBuffer + SDPPDU_DATA) + 2)
   if BYTE[inPtr]
     contIn := ReadBE16(inPtr + 1)
   else
     contIn~
-  
+
   outPtr := @aclBuffer + constant(SDPPDU_DATA + 2)          ' Skip list size header
   outEnd := @aclBuffer + constant(hci#ACL_PACKET_SIZE - 3)  ' Leave room for continuation
 
@@ -1529,17 +1529,17 @@ PRI SDPProcessPDU : len | inPtr, inEnd, outPtr, outEnd, contIn, contOut, service
   if not contIn
     BYTE[outPtr++] := constant(DE_Sequence | DE_Size16)
     WriteBE16(outPtr, svcListSize)
-    outPtr += 2  
+    outPtr += 2
 
   ' Now copy each service in the list, skipping bytes we already sent
-  
+
   service := svcListHead
   contOut~
 
   repeat while service
     inEnd := SkipDE(inPtr := service + 2)
     service := WORD[service]
-    
+
     repeat while inPtr <> inEnd and outPtr <> outEnd
       if contOut++ => contIn
         ' Include this byte
@@ -1554,7 +1554,7 @@ PRI SDPProcessPDU : len | inPtr, inEnd, outPtr, outEnd, contIn, contOut, service
   if contOut < svcListSize
     BYTE[outPtr++] := 2
     WriteBE16(outPtr, contOut)
-    outPtr += 2     
+    outPtr += 2
   else
     BYTE[outPtr++]~
 
@@ -1589,14 +1589,14 @@ PRI SkipDE(ptr) | descriptor
 
   return ptr
 
-  
+
 DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

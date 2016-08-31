@@ -19,7 +19,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2011 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2011 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -31,9 +31,9 @@ Hardware Requirements
  - USB D- attached to P0 with a 47Ω series resistor
  - USB D+ attached to P1 with a 47Ω series resistor
  - Pull-down resistors (~47kΩ) from USB D- and D+ to ground
- 
+
   ┌───────────────┐  USB Host (Type A) Socket
-  │ ─┬┬─┬┬─┬┬─┬┬─ │  
+  │ ─┬┬─┬┬─┬┬─┬┬─ │
   │ 1└┘2└┘3└┘4└┘  │  1: Vbus (+5v)  Red
   ├───────────────┤  2: D-          White
                      3: D+          Green
@@ -42,11 +42,11 @@ Hardware Requirements
                 +5v
                   ┌┐
       2x 47Ω     └─┤│ (1) Vbus
-  P0 ─────┳─────┤│ (2) D- 
+  P0 ─────┳─────┤│ (2) D-
   P1 ─────┼─┳───┤│ (3) D+
              │ │ ┌─┤│ (4) GND
              │ │ │ └┘
-     2x 47kΩ   │       
+     2x 47kΩ   │
              │ │ │
                
 
@@ -203,7 +203,7 @@ CON
   ' descriptor is longer than this, we'll truncate it. Must be a multiple of 4.
 
   CFGDESC_BUFFER_LEN = 256
-           
+
   ' USB data pins.
   '
   ' Important: Both DMINUS and DPLUS must be <= 8, since we
@@ -222,27 +222,27 @@ CON
   ' resistor and logic analyzer probe to each pin. To disable, set all values to zero.
   '
   ' Since the masks must fit in an instruction's immediate data, you must use P0 through P8.
-  
+
   DEBUG_ACK_MASK   = 0
   DEBUG_TX_MASK    = 0
 
   ' Low-level debug flags, settable at runtime
 
-  DEBUGFLAG_NO_CRC = $01 
-                     
+  DEBUGFLAG_NO_CRC = $01
+
   ' Output bus states
   BUS_MASK  = (|< DPLUS) | (|< DMINUS)
   STATE_J   = |< DPLUS
   STATE_K   = |< DMINUS
   STATE_SE0 = 0
   STATE_SE1 = BUS_MASK
-  
+
   ' Retry options
 
   MAX_TOKEN_RETRIES    = 200    '
   MAX_CRC_RETRIES      = 200
   TIMEOUT_FRAME_DELAY  = 10
-  
+
   ' Number of CRC error retry attempts
 
   ' Offsets in EndpointTable
@@ -250,7 +250,7 @@ CON
   EPTABLE_TOKEN      = 0        ' word
   EPTABLE_TOGGLE_IN  = 2        ' byte
   EPTABLE_TOGGLE_OUT = 3        ' byte
-  
+
   ' Port connection status codes
   PORTC_NO_DEVICE  = STATE_SE0     ' No device (pull-down resistors in host)
   PORTC_FULL_SPEED = STATE_J       ' Full speed: pull-up on D+
@@ -261,7 +261,7 @@ CON
   ' Command opcodes for the controller cog.
 
   OP_NOP           = 0                 ' Do nothing
-  OP_RESET         = 1                 ' Send a USB Reset signal   ' 
+  OP_RESET         = 1                 ' Send a USB Reset signal   '
   OP_TX_BEGIN      = 2                 ' Start a TX packet. Includes 8-bit PID
   OP_TX_END        = 3                 ' End a TX packet
   OP_TXRX          = 4                 ' Transmit and/or receive packets
@@ -269,7 +269,7 @@ CON
   OP_TX_DATA_PTR   = 6                 ' Encode data from hub memory.
                                        '   Command arg: pointer
                                        '   "result" IN: Number of bytes
-  OP_TX_CRC16      = 7                 ' Encode  a 16-bit CRC of all data since the PID   
+  OP_TX_CRC16      = 7                 ' Encode  a 16-bit CRC of all data since the PID
   OP_RX_PID        = 8                 ' Decode and return a 16-bit PID word, reset CRC-16
   OP_RX_DATA_PTR   = 9                 ' Decode data to hub memory.
                                        '   Command arg: pointer
@@ -283,7 +283,7 @@ CON
   TXRX_TX_ONLY     = %00
   TXRX_TX_RX       = %01
   TXRX_TX_RX_ACK   = %11
-  
+
   ' USB PID values / commands
 
   PID_OUT    = %1110_0001
@@ -305,7 +305,7 @@ CON
   SYNC_PID_NAK    = SYNC_FIELD | (PID_NAK << 8)
   SYNC_PID_STALL  = SYNC_FIELD | (PID_STALL << 8)
   SYNC_PID_DATA0  = SYNC_FIELD | (PID_DATA0 << 8)
-  SYNC_PID_DATA1  = SYNC_FIELD | (PID_DATA1 << 8)    
+  SYNC_PID_DATA1  = SYNC_FIELD | (PID_DATA1 << 8)
 
   ' USB Tokens (Device ID + Endpoint) with pre-calculated CRC5 values.
   ' Since we only support a single USB device, we only need tokens for
@@ -364,7 +364,7 @@ CON
   ' The 'DESCHDR' variants are the full descriptor header,
   ' including type and length. This matches the first two bytes
   ' of any such static-length descriptor.
-  
+
   DESC_DEVICE           = $0100
   DESC_CONFIGURATION    = $0200
   DESC_STRING           = $0300
@@ -375,7 +375,7 @@ CON
   DESCHDR_CONFIGURATION = $02_09
   DESCHDR_INTERFACE     = $04_09
   DESCHDR_ENDPOINT      = $05_07
-  
+
   ' Descriptor Formats
 
   DEVDESC_bLength             = 0
@@ -438,7 +438,7 @@ CON
   TT_ISOC      = $01
   TT_BULK      = $02
   TT_INTERRUPT = $03
-                
+
   ' Negative error codes. Most functions in this library can call
   ' "abort" with one of these codes.
   '
@@ -466,7 +466,7 @@ CON
   E_NO_DEVICE     = -150        ' No device is attached
   E_LOW_SPEED     = -151        ' Low-speed devices are not supported
   E_PORT_BOUNCE   = -152        ' Port connection state changing during Enumerate
-  
+
   E_TIMEOUT       = -160        ' Timed out waiting for a response
   E_TRANSFER      = -161        ' Generic low-level transfer error
   E_CRC           = -162        ' CRC-16 mismatch and/or babble condition
@@ -478,7 +478,7 @@ CON
   E_READ_DD_1     = -171        ' Enumeration error: First device descriptor read
   E_READ_DD_2     = -172        ' Enumeration error: Second device descriptor read
   E_READ_CONFIG   = -173        ' Enumeration error: Config descriptor read
-  
+
   E_OUT_OF_COGS   = -180        ' Not enough free cogs, can't initialize
   E_OUT_OF_MEM    = -181        ' Not enough space for the requested buffer sizes
   E_DESC_PARSE    = -182        ' Can't parse a USB descriptor
@@ -488,7 +488,7 @@ DAT
   ' This is a singleton object, so we use DAT for all variables.
   ' Note that, unlike VARs, these won't be sorted automatically.
   ' Keep variables of the same type together.
-                                             
+
 txc_command   long      -1                      ' Command buffer: [23:16]=arg, [15:0]=code ptr
 rx1_time      long      -1                      ' Trigger time for RX1 cog
 rx2_time      long      -1                      ' Trigger time for RX2 cog
@@ -520,16 +520,16 @@ PUB Start
   '' if we run out of recycled memory while allocating buffers.
   ''
   '' This function typically doesn't need to be invoked explicitly. It will
-  '' be called automatically by GetPortConnection and Enumerate.                          
+  '' be called automatically by GetPortConnection and Enumerate.
 
   if isRunning
     return
 
-  heap_top := @heap_begin  
+  heap_top := @heap_begin
   buf_dd := alloc(DEVDESC_LEN)
   buf_cfg := alloc(CFGDESC_BUFFER_LEN)
   buf_setup := alloc(SETUP_LEN)
-  
+
   ' Set up pre-cognew parameters
   sof_deadline := cnt
   txp_portc    := @portc
@@ -537,10 +537,10 @@ PUB Start
   txp_rx1_time := @rx1_time
   txp_rx2_time := @rx2_time
   rx2p_sop     := @rx2_sop
-  
+
   txp_rxdone   := rx1p_done   := rx2p_done   := @rxdone
   txp_rxbuffer := rx1p_buffer := rx2p_buffer := alloc(constant(RX_BUFFER_WORDS * 4))
-  
+
   if cognew(@controller_cog, @txc_command)<0 or cognew(@rx_cog_1, @rx1_time)<0 or cognew(@rx_cog_2, @rx2_time)<0
     abort E_OUT_OF_COGS
 
@@ -588,7 +588,7 @@ PUB GetPortConnection
   return portc
 
 PUB Enumerate | pc
-  '' Initialize the attached USB device, and get information about it.  
+  '' Initialize the attached USB device, and get information about it.
   ''
   ''   1. Reset the device
   ''   2. Assign it an address
@@ -609,7 +609,7 @@ PUB Enumerate | pc
     PORTC_NO_DEVICE, PORTC_INVALID:
       abort E_NO_DEVICE
     PORTC_LOW_SPEED:
-      abort E_LOW_SPEED          
+      abort E_LOW_SPEED
 
   ' Device reset, and give it some time to wake up
   DeviceReset
@@ -620,15 +620,15 @@ PUB Enumerate | pc
   ' ended. So, we'll use a temporary maximum packet size of 8 in order to address the
   ' device and to receive the first 8 bytes of the device descriptor. This should
   ' always be possible using transfers of no more than one packet in length.
-  BYTE[buf_dd + DEVDESC_bMaxPacketSize0] := 8    
-              
+  BYTE[buf_dd + DEVDESC_bMaxPacketSize0] := 8
+
   if 0 > \DeviceAddress
     abort E_DEV_ADDRESS
-  
+
   ' Read the real max packet length (Must request exactly 8 bytes)
   if 0 > \ControlRead(REQ_GET_DESCRIPTOR, DESC_DEVICE, 0, buf_dd, 8)
     abort E_READ_DD_1
-  
+
   ' Validate device descriptor header
   if WORD[buf_dd] <> DESCHDR_DEVICE
     abort E_DESC_PARSE
@@ -636,9 +636,9 @@ PUB Enumerate | pc
   ' Read the whole descriptor
   if 0 > \ControlRead(REQ_GET_DESCRIPTOR, DESC_DEVICE, 0, buf_dd, DEVDESC_LEN)
     abort E_READ_DD_2
-  
+
   ReadConfiguration(0)
-  
+
 PUB Configure
   '' Switch device configurations. This (re)configures the device according to
   '' the currently loaded configuration descriptor. To use a non-default configuration,
@@ -652,7 +652,7 @@ PUB UnConfigure
   '' In the unconfigured state, only the default control endpoint may be used.
 
   Control(REQ_SET_CONFIGURATION, 0, 0)
-  
+
 PUB ReadConfiguration(index)
   '' Read in a configuration descriptor from the device. Most devices have only one
   '' configuration, and we load it automatically in Enumerate. So you usually don't
@@ -664,10 +664,10 @@ PUB ReadConfiguration(index)
 
   if 0 > \ControlRead(REQ_GET_DESCRIPTOR, DESC_CONFIGURATION | index, 0, buf_cfg, CFGDESC_BUFFER_LEN)
     abort E_READ_CONFIG
-  
+
   if WORD[buf_cfg] <> DESCHDR_CONFIGURATION
     abort E_DESC_PARSE
-  
+
 PUB DeviceDescriptor : ptr
   '' Get a pointer to the enumerated device's Device Descriptor
   return buf_dd
@@ -680,7 +680,7 @@ PUB ConfigDescriptor : ptr
 PUB VendorID : devID
   '' Get the enumerated device's 16-bit Vendor ID
   return WORD[buf_dd + DEVDESC_idVendor]
-  
+
 PUB ProductID : devID
   '' Get the enumerated device's 16-bit Product ID
   return WORD[buf_dd + DEVDESC_idProduct]
@@ -749,7 +749,7 @@ PUB FindInterface(class) : foundIf
   '' If no such interface exists on the current configuration, returns 0.
 
   foundIf := FirstInterface
-  repeat while foundIf 
+  repeat while foundIf
     if BYTE[foundIf + IFDESC_bInterfaceClass] == class
       return foundIf
     foundIf := NextInterface(foundIf)
@@ -765,14 +765,14 @@ PUB EndpointType(epd)
 
   return BYTE[epd + EPDESC_bmAttributes] & $03
 
-    
+
 PUB UWORD(addr) : value
   '' Like WORD[addr], but works on unaligned addresses too.
   '' You must use this rather than WORD[] when reading 16-bit values
   '' from descriptors, since descriptors have no alignment guarantees.
- 
+
   return BYTE[addr] | (BYTE[addr + 1] << 8)
-     
+
 
 DAT
 ''
@@ -783,7 +783,7 @@ DAT
 PUB DeviceReset
   '' Asynchronously send a USB bus reset signal.
 
-  Command(OP_RESET, 0) 
+  Command(OP_RESET, 0)
   ResetEndpointToggle
 
 PUB DeviceAddress | buf
@@ -798,8 +798,8 @@ PUB DeviceAddress | buf
   WORD[buf_setup + SETUP_wValue] := 1
   LONG[buf_setup + SETUP_wIndex]~
 
-  ControlRaw(TOKEN_DEV0_EP0, @buf, 4) 
-  
+  ControlRaw(TOKEN_DEV0_EP0, @buf, 4)
+
 DAT
 ''
 ''==============================================================================
@@ -816,7 +816,7 @@ PUB Control(req, value, index) | buf
   WORD[buf_setup + SETUP_wLength]~
 
   return ControlRaw(TOKEN_DEV1_EP0, @buf, 4)
-  
+
 PUB ControlRead(req, value, index, bufferPtr, length) | toggle
 
   '' Issue a control IN transfer to an addressed device.
@@ -829,13 +829,13 @@ PUB ControlRead(req, value, index, bufferPtr, length) | toggle
   WORD[buf_setup + SETUP_wIndex] := index
   WORD[buf_setup + SETUP_wLength] := length
 
-  ' Issues SETUP and IN transactions 
-  result := ControlRaw(TOKEN_DEV1_EP0, bufferPtr, length)    
+  ' Issues SETUP and IN transactions
+  result := ControlRaw(TOKEN_DEV1_EP0, bufferPtr, length)
 
   ' Status phase (OUT + DATA1)
   toggle := PID_DATA1
-  WriteData(PID_OUT, TOKEN_DEV1_EP0, 0, 0, @toggle, MAX_TOKEN_RETRIES)  
-  
+  WriteData(PID_OUT, TOKEN_DEV1_EP0, 0, 0, @toggle, MAX_TOKEN_RETRIES)
+
 PUB ControlWrite(req, value, index, bufferPtr, length) | toggle, pktSize0, packetSize
 
   '' Issue a control OUT transfer to an addressed device.
@@ -849,7 +849,7 @@ PUB ControlWrite(req, value, index, bufferPtr, length) | toggle, pktSize0, packe
   WriteData(PID_SETUP, TOKEN_DEV1_EP0, buf_setup, 8, @toggle, MAX_TOKEN_RETRIES)
 
   ' Break OUT data into multiple packets if necessary
-  pktSize0 := BYTE[buf_dd + DEVDESC_bMaxPacketSize0] 
+  pktSize0 := BYTE[buf_dd + DEVDESC_bMaxPacketSize0]
   repeat
     packetSize := length <# pktSize0
     WriteData(PID_OUT, TOKEN_DEV1_EP0, bufferPtr, packetSize, @toggle, MAX_TOKEN_RETRIES)
@@ -888,7 +888,7 @@ PUB InterruptRead(epd, buffer, length) : actual | epTable
   '     never want it to receive more than one packet at a time here.
   '   - We give it a retry of 0, since we don't want to retry on NAK.
 
-  epTable := EndpointTableAddr(epd) 
+  epTable := EndpointTableAddr(epd)
   return DataIN(WORD[epTable], buffer, length, $1000, epTable + EPTABLE_TOGGLE_IN, TXRX_TX_RX, 0, MAX_CRC_RETRIES)
 
 
@@ -908,19 +908,19 @@ PUB BulkWrite(epd, buffer, length) | packetSize, epTable, maxPacketSize
   '' packets and no zero-length packet.
   ''
   '' 'epd' is a pointer to this endpoint's Endpoint Descriptor.
-  
+
   epTable := EndpointTableAddr(epd)
   maxPacketSize := EndpointMaxPacketSize(epd)
-  
+
   repeat
     packetSize := length <# maxPacketSize
-    
+
     WriteData(PID_OUT, WORD[epTable], buffer, packetSize, epTable + EPTABLE_TOGGLE_OUT, MAX_TOKEN_RETRIES)
-    
+
     buffer += packetSize
     if (length -= packetSize) =< 0
       return
-    
+
 PUB BulkRead(epd, buffer, length) : actual | epTable
 
   '' Read up to 'length' bytes from a Bulk IN endpoint.
@@ -946,7 +946,7 @@ PRI EndpointMaxPacketSize(epd) : maxPacketSize
   ' Parse the max packet size out of an endpoint descriptor
 
   return UWORD(epd + EPDESC_wMaxPacketSize)
-  
+
 PRI ResetEndpointToggle | ep
   ' Reset all endpoints to the default DATA0 toggle
 
@@ -976,17 +976,17 @@ PRI DataIN(token, buffer, length, maxPacketLen, togglePtr, txrxFlag, tokenRetrie
   ' allows the device to send us back up to maxPacketLen bytes of data.
   ' If the device sends a short packet (including zero-byte packets)
   ' it terminates the transfer.
-  
+
   repeat
-    packetLen := ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries) 
+    packetLen := ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries)
     actual += packetLen
     buffer += packetLen
     length -= packetLen
 
     if packetLen < maxPacketLen
-      return  ' Short packet. Device ended the transfer early. 
-    if length =< 0   
-      return  ' Transfer fully completed 
+      return  ' Short packet. Device ended the transfer early.
+    if length =< 0
+      return  ' Transfer fully completed
 
 PRI WriteData(pid, token, buffer, length, togglePtr, retries)
 
@@ -1027,18 +1027,18 @@ PRI WriteData(pid, token, buffer, length, togglePtr, retries)
         abort E_STALL
 
       SYNC_PID_ACK:
-        BYTE[togglePtr] ^= constant(PID_DATA0 ^ PID_DATA1) 
+        BYTE[togglePtr] ^= constant(PID_DATA0 ^ PID_DATA1)
         return E_SUCCESS
 
       other:
         abort E_PID
-  
+
 PRI RequestDataIN(token, txrxFlag, togglePtr, retries)
 
   ' Low-level data IN request. Handles data toggle and retry.
   ' This is part of the implementation of DataIN().
   ' Aborts on error, otherwise returns the EOP timestamp.
-                                               
+
   repeat
     SendToken(PID_IN, token)
 
@@ -1049,7 +1049,7 @@ PRI RequestDataIN(token, txrxFlag, togglePtr, retries)
     Command(OP_RX_PID, 0)
     Sync
     case txc_result
-    
+
       SYNC_PID_NAK:
         ' Busy. Wait a frame and try again.
         if --retries =< 0
@@ -1064,12 +1064,12 @@ PRI RequestDataIN(token, txrxFlag, togglePtr, retries)
           abort E_TOGGLE
         if txrxFlag == TXRX_TX_RX_ACK
           ' Only toggle if we're ACK'ing this packet
-          BYTE[togglePtr] ^= constant(PID_DATA0 ^ PID_DATA1)  
+          BYTE[togglePtr] ^= constant(PID_DATA0 ^ PID_DATA1)
         return
 
       other:
         abort E_PID
-      
+
 PRI ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries)
 
   ' Low-level data IN request + read to buffer.
@@ -1097,7 +1097,7 @@ PRI ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
   ' protocol level.
 
   repeat crcRetries
-  
+
     ' The process of actually decoding the received packet is a bit convoluted,
     ' due to the split of responsibilities between the RX cogs, TX cog, and
     ' Spin code:
@@ -1135,14 +1135,14 @@ PRI ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
     '    roundingBits = 4
     '
     '    offset = (headerBits + crcBits + roundingBits) * 8 - 4 = 284
-  
+
     result := (RequestDataIN(token, txrxFlag, togglePtr, tokenRetries) - rx2_sop - 284) ~> 3
 
-    if result =< 0   
-      result~ ' Zero-length packet. Device ended the transfer early  
-    elseif length =< 0    
+    if result =< 0
+      result~ ' Zero-length packet. Device ended the transfer early
+    elseif length =< 0
       result~ ' We don't want the data, the caller is just checking for a good PID. We're done.
-    else  
+    else
       ' The packet wasn't zero-length. Figure out how many bytes it was while
       ' we were decoding. The parameters for OP_RX_DATA_PTR are very counterintuitive,
       ' see the assembly code for a complete description. After the call, packetLen
@@ -1160,9 +1160,9 @@ PRI ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
       ' buffer isn't pointing at the actual CRC.
       '
       ' This is why E_CRC can mean either a CRC error or a babble error.
- 
+
       Command(OP_RX_CRC16, 0)
-      Sync    
+      Sync
       if txc_result and not (debugFlags & DEBUGFLAG_NO_CRC)
         result := E_CRC
 
@@ -1239,7 +1239,7 @@ EndpointTable           word    TOKEN_DEV1_EP0, 0
 DAT
 
 heap_begin    ' Begin recyclable memory heap
-            
+
 '==============================================================================
 ' Controller / Transmitter Cog
 '==============================================================================
@@ -1268,12 +1268,12 @@ controller_cog
               ' This sets up CTRA as a divide-by-8, with no PLL multiplication.
               ' Use 2bpp "VGA" mode, so we can insert SE0 states easily. Every
               ' two bits we send to waitvid will be two literal bits on D- and D+.
-              
+
               ' To start with, we leave the pin mask in vcfg set to all zeroes.
               ' At the moment we're actually ready to transmit, we set the mask.
               '
               ' We also re-use this initialization code space for temporary variables.
-              
+
 tx_count      mov       ctra, ctra_value
 t1            mov       frqa, frqa_value
 l_cmd         mov       vcfg, vcfg_value
@@ -1299,7 +1299,7 @@ command_loop
               sub       t1, sof_deadline
               rcl       t1, #1 wc               ' C = deadline is in the future
         if_nc tjz       tx_count, #tx_sof       ' Send the SOF if the buffer is not in use
-   
+
               rdlong    l_cmd, par wz           ' Look for an incoming command
         if_z  jmp       #command_loop
 
@@ -1327,7 +1327,7 @@ command_loop
               ' We need to sample this when the bus is idle, and this
               ' is a convenient time to do so. We can also skip sending
               ' the SOF if the bus isn't in a supported state.
- 
+
 tx_sof
               xor       cmd_sof_wait, c_condition     ' Let an SOF wait through.
                                                       ' (Swap from if_always to if_never)
@@ -1337,7 +1337,7 @@ tx_sof
               wrbyte    t1, txp_portc                 ' Save idle bus state as PORTC
               cmp       t1, #PORTC_FULL_SPEED wz
         if_nz jmp       #:skip                        ' Only send SOF to full-speed devices
-                          
+
               call      #encode_sync                  ' SYNC field
 
               mov       codec_buf, sof_frame          ' PID and Token
@@ -1345,15 +1345,15 @@ tx_sof
               call      #encode
 
               call      #encode_eop                   ' End of packet and inter-packet delay
-                                                
+
               mov       l_cmd, #0                     ' TX only, no receive
               call      #txrx
 
 :skip
               add       sof_deadline, sof_period
-              
-              jmp       #command_loop 
-              
+
+              jmp       #command_loop
+
               '======================================================
               ' OP_TX_BEGIN
               '======================================================
@@ -1362,7 +1362,7 @@ tx_sof
               ' 16 bits (8 sync, 8 pid) which will fill up the first long
               ' of the transmit buffer. So it's legal to use tx_count!=0
               ' to detect whether we're using the transmit buffer.
-              
+
 cmd_tx_begin
               call      #encode_sync
 
@@ -1408,7 +1408,7 @@ cmd_tx_data_16
               ' chunks when possible (at least 4 bytes left, pointer is
               ' long-aligned) but right now we're optimizing for simplicity
               ' and small code size.
-              
+
 cmd_tx_data_ptr
               rdlong    t1, txp_result
 
@@ -1417,9 +1417,9 @@ cmd_tx_data_ptr
               add       l_cmd, #1
               call      #encode
               djnz      t1, #:loop
-              
+
               jmp       #cmdret
-              
+
               '======================================================
               ' OP_TX_CRC16
               '======================================================
@@ -1431,7 +1431,7 @@ cmd_tx_crc16
               call      #encode
 
               jmp       #cmdret
-                          
+
               '======================================================
               ' OP_TXRX
               '======================================================
@@ -1443,7 +1443,7 @@ cmd_txrx
               '======================================================
               ' OP_RESET
               '======================================================
-              
+
 cmd_reset
 
               andn      outa, #BUS_MASK         ' Start driving SE0
@@ -1452,10 +1452,10 @@ cmd_reset
               mov       t1, cnt
               add       t1, reset_period
               waitcnt   t1, #0
-                                                    
+
               andn      dira, #BUS_MASK         ' Stop driving
               mov       sof_deadline, cnt       ' Ignore SOFs that should have occurred
-              
+
               jmp       #cmdret
 
               '======================================================
@@ -1471,10 +1471,10 @@ cmd_rx_pid
               shr       codec_buf, #16
               wrlong    codec_buf, txp_result
 
-              mov       dec_crc16, crc16_mask   ' Reset the CRC-16 
+              mov       dec_crc16, crc16_mask   ' Reset the CRC-16
 
               jmp       #cmdret
-              
+
               '======================================================
               ' OP_RX_DATA_PTR
               '======================================================
@@ -1482,7 +1482,7 @@ cmd_rx_pid
               ' Parameters:
               '   - Hub pointer in the command word
               '   - Maximum raw bit count in result[15:0]
-              '   - Maximum byte count in result[31:16]   
+              '   - Maximum byte count in result[31:16]
               '
               ' Returns:
               '   - Final write pointer (actual byte count + original pointer)
@@ -1504,7 +1504,7 @@ cmd_rx_pid
 
 cmd_rx_data_ptr
               rdlong    t1, txp_result          ' Byte/bit count
-              
+
 :loop         mov       codec_cnt, #8           ' One byte at a time
               sub       t1, c_00010000          ' Decrements byte count
               call      #decode                 ' Decrements bit count
@@ -1516,11 +1516,11 @@ cmd_rx_data_ptr
 
               wrword    l_cmd, txp_result
               jmp       #cmdret
-    
+
               '======================================================
               ' OP_RX_CRC16
               '======================================================
-             
+
 cmd_rx_crc16
               xor       dec_crc16, crc16_mask   ' Save CRC of payload
               mov       t3, dec_crc16
@@ -1532,7 +1532,7 @@ cmd_rx_crc16
               xor       t3, codec_buf           ' Compare
               wrlong    t3, txp_result          ' and return
               jmp       #cmdret
-              
+
               '======================================================
               ' OP_SOF_WAIT
               '======================================================
@@ -1548,7 +1548,7 @@ cmd_sof_wait  jmp       #command_loop
               xor       cmd_sof_wait, c_condition       ' Swap from if_never to if_always
               jmp       #cmdret
 
-        
+
               '======================================================
               ' Transmit / Receive Front-end
               '======================================================
@@ -1569,7 +1569,7 @@ txrx
               wrbyte    v_idle, txp_rxdone      ' Arbitrary nonzero byte
 
               rcr       l_cmd, #1 wc            ' C = bit0 = RX Enable
-              
+
               ' Transmitter startup: We need to synchronize with the video PLL,
               ' and transition from an undriven idle state to a driven idle state.
               ' To do this, we need to fill up the video generator register with
@@ -1599,7 +1599,7 @@ txrx
               add       tx_count_raw, #15       ' 0 -> 16
               and       tx_count_raw, #%1111    ' Period is 16 bits
               shl       tx_count_raw, #1        ' 2 iters per bit
-                          
+
               ' Transmit our NRZI-encoded packet.
               '
               ' This loop is optimized to do the last waitvid separately, so
@@ -1611,7 +1611,7 @@ txrx
 
 :tx_loop      sub       tx_count, #1 wz
         if_z  jmp       #:tx_loop_last          ' Stop looping before the last word
-              
+
 :tx_inst1     waitvid   v_palette, 0            ' Output all words except the last one
               add       :tx_inst1, #1
               jmp       #:tx_loop
@@ -1632,11 +1632,11 @@ txrx
               andn      dira, #DEBUG_TX_MASK | BUS_MASK
               jmp       #:tx_release_done
 
-:tx_inst3     waitvid   v_palette, 0            ' tx_count_raw == 0 
+:tx_inst3     waitvid   v_palette, 0            ' tx_count_raw == 0
               andn      dira, #DEBUG_TX_MASK | BUS_MASK
 
 :tx_release_done
-              
+
               ' As soon as we're done transmitting, switch to a 'turbo' vscl value,
               ' so that after the current video word expires we switch to a faster
               ' clock. This will help us synchronize to the video generator faster
@@ -1650,7 +1650,7 @@ txrx
 
         if_nc jmp       #:rx_done                       ' Receiver disabled
               rcr       l_cmd, #1 wc                    ' C = bit1 = ACK Enable
-              
+
               ' First, wait for an EOP signal. This wait needs to have a timeout,
               ' in case we never receive a packet. It also needs to have low latency,
               ' since we use this timing both to send ACK packets and to calculate
@@ -1680,7 +1680,7 @@ txrx
               ' will use this value to calculate actual packet length.
 
               wrlong    t3, txp_result
-              
+
               ' Now we're just waiting for the RX cog to finish. Poll RX_DONE.
               ' This shouldn't take long, since we already waited for the EOP.
               ' The RX cogs just need to detect the EOP and finish the word
@@ -1705,7 +1705,7 @@ txrx
 
               ' Initialize the decoder, point it at the top of the RX buffer.
               ' The decoder will load the first long on our first invocation.
-              
+
               mov       dec_rxbuffer, txp_rxbuffer
               mov       dec_nrzi_cnt, #1        ' Mod-32 counter
               mov       dec_nrzi_st, #0
@@ -1717,7 +1717,7 @@ txrx
               '======================================
               ' End of Receiver Controller
               '======================================
-                                                                                
+
               call      #enc_reset              ' Reset the encoder too
               movs      vcfg, #0                ' Disconnect vid gen. from outputs
 
@@ -1751,8 +1751,8 @@ encode
 
               test      enc_crc16, #1 wz
               shr       enc_crc16, #1
-    if_z_eq_c xor       enc_crc16, crc16_poly        
-      
+    if_z_eq_c xor       enc_crc16, crc16_poly
+
               ' NRZI-encode one bit.
               '
               ' For every incoming bit, we generate two outgoing bits;
@@ -1768,7 +1768,7 @@ encode
               '
               ' These two operations correspond
               ' to NRZI encoding 0 and 1, respectively.
-  
+
               sar       enc_nrzi, #2
         if_nc xor       enc_nrzi, c_80000000     ' NRZI 0
         if_c  xor       enc_nrzi, c_40000000     ' NRZI 1
@@ -1785,7 +1785,7 @@ enc_bitstuff_ret
 
               ' Every time we fill up enc_nrzi, append it to tx_buffer.
               ' We use another shift register as a modulo-32 counter.
-     
+
               ror       enc_nrzi_cnt, #1 wc
               add       tx_count, #1
 encode_ptr
@@ -1793,7 +1793,7 @@ encode_ptr
         if_c  add       encode_ptr, c_dest_1
 
               ' Insert the stuffed bit if necessary
-              
+
         if_z  jmp       #enc_bitstuff
 
               djnz      codec_cnt, #encode
@@ -1807,13 +1807,13 @@ encode_ret    ret
 enc_bitstuff  sar       enc_nrzi, #2
               xor       enc_nrzi, c_80000000
               mov       enc_1cnt, #6 wz
-              jmp       #enc_bitstuff_ret       ' Count and store this bit            
+              jmp       #enc_bitstuff_ret       ' Count and store this bit
 
-                          
+
               '======================================================
               ' Encoder / Transmitter Reset
               '======================================================
-        
+
               ' (Re)initialize the encoder and transmitter registers.
               ' The transmit buffer will now be empty.
 
@@ -1834,11 +1834,11 @@ enc_reset_ret ret
               ' so these functions are slower but more flexible encoding
               ' entry points.
               '
-              
+
               ' Check whether we need to store the contents of enc_nrzi
               ' after encoding another bit-period worth of data from it.
               ' This is a modified version of the tail end of 'encode' above.
-              
+
 encode_store
               mov       :ptr, encode_ptr
               ror       enc_nrzi_cnt, #1 wc
@@ -1870,7 +1870,7 @@ encode_se0
 encode_se0_ret ret
 
               ' One cycle of idle bus (J state).
-              
+
 encode_idle
               shr       enc_nrzi, #2
               xor       enc_nrzi, c_80000000
@@ -1890,7 +1890,7 @@ encode_sync_ret ret
               ' Note that this makes sure we have at least one idle
               ' bit after the SE0s, but we'll probably have more due
               ' to the padding and bus-release latency in the transmitter.
-encode_eop    
+encode_eop
               call      #encode_se0
               call      #encode_se0
               call      #encode_idle
@@ -1911,7 +1911,7 @@ encode_eop_ret ret
               '
               ' For every raw bit we consume, subtract 1 from t1.
               ' This is used as part of the byte/bit limiting for rx_data_ptr.
-              
+
 decode
               sub       t1, #1
 
@@ -1926,42 +1926,42 @@ decode
               '
               ' Once every 32 decoded bits (starting with the first bit) we load a
               ' new long from dec_rxbuffer into dec_rxlatch. When we shift bits out
-              ' of dec_nrzi, bits from dec_rxlatch replace them. 
-                                                        
+              ' of dec_nrzi, bits from dec_rxlatch replace them.
+
               ror       dec_nrzi_cnt, #1 wc
         if_c  rdlong    dec_rxlatch, dec_rxbuffer
         if_c  add       dec_rxbuffer, #4
               rcr       dec_rxlatch, #1 wc
               rcr       dec_nrzi, #1 wc
-        
+
               ' We use a small auxiliary shift register to XOR the current bit
               ' with the last one, even across word boundaries where we might have
               ' to reload the main shift register. This auxiliary shift register
               ' ends up tracking the state ("what was the last bit?") for NRZI decoding.
-              
+
               rcl       dec_nrzi_st, #1
 
               cmp       dec_1cnt, #6 wz         ' Skip stuffed bits
         if_z  mov       dec_1cnt, #0
         if_z  jmp       #decode
-              
+
               test      dec_nrzi_st, #%10 wz    ' Previous bit
               shr       codec_buf, #1
-    if_c_ne_z or        codec_buf, c_80000000   ' codec_buf <= !(prev XOR current)     
+    if_c_ne_z or        codec_buf, c_80000000   ' codec_buf <= !(prev XOR current)
               test      codec_buf, c_80000000 wz ' Move decoded bit to Z
 
-    if_nz     add       dec_1cnt, #1            ' Count consecutive '1' bits       
+    if_nz     add       dec_1cnt, #1            ' Count consecutive '1' bits
     if_z      mov       dec_1cnt, #0
-    
+
               ' Update our CRC-16. This performs the same function as the logic
               ' in the encoder above, but it's optimized for our flag usage.
 
               shr       dec_crc16, #1 wc          ' Shift out CRC LSB into C
-    if_z_eq_c xor       dec_crc16, crc16_poly        
-   
+    if_z_eq_c xor       dec_crc16, crc16_poly
+
               djnz      codec_cnt, #decode
 decode_ret    ret
-             
+
 
               '======================================================
               ' Data
@@ -1978,7 +1978,7 @@ txp_rx2_time  long      0
 txp_rxbuffer  long      0
 
 ' Constants
-              
+
 c_zero        long      0
 c_40000000    long      $40000000
 c_80000000    long      $80000000
@@ -1992,7 +1992,7 @@ reset_period  long      96_000 * 10
 
 frqa_value    long      $10000000                       ' 1/8
 ctra_value    long      (%00001 << 26) | (%111 << 23)   ' PLL 1:1
-vcfg_value    long      (%011 << 28)                    ' Unpack 2-bit -> 8-bit     
+vcfg_value    long      (%011 << 28)                    ' Unpack 2-bit -> 8-bit
 vscl_value    long      (8 << 12) | (8 * 16)            ' Normal 8 clocks per pixel
 vscl_turbo    long      (1 << 12) | (1 * 16)            ' 1 clock per pixel
 v_palette     long      (BUS_MASK << 24) | (STATE_J << 16) | (STATE_K) << 8
@@ -2022,7 +2022,7 @@ v_idle        long      %%2222_2222_2222_2222
 '
 '     (Currently we wait 4 bit periods.
 '      This may need to be tweaked)
-                            
+
 v_ack1        long      %%2122112121212222
 v_ack2        long      %%2222222222001112
 
@@ -2046,7 +2046,7 @@ eopwait_iters long      ((RX_BUFFER_WORDS * 32) + 128)
 ' also send a fake (non-incrementing) frame number.
 
 sof_frame     long      %00010_00000000000_1010_0101    ' SOF PID, Frame 0, valid CRC6
-sof_period    long      96_000                          ' 96 MHz, 1ms          
+sof_period    long      96_000                          ' 96 MHz, 1ms
 
 ' Encoder only
 enc_nrzi      res       1                               ' Encoded NRZI shift register
@@ -2091,14 +2091,14 @@ rx_cog_1
               ' sampling immediately, we save this phase shift for the second
               ' sampling iteration. This means that the first iteration will
               ' have somewhat lousier phase alignment than the rest.
-              
+
               movs      :rx1_period, #(16*8 - 10)
-              
+
 :wait         rdlong    t2, par wz              ' Read trigger timestamp
         if_z  jmp       #:wait
               wrlong    rx1_zero, par           ' One-shot, zero it.
-                                                  
-              waitcnt   t2, #0                  ' Wait for trigger time          
+
+              waitcnt   t2, #0                  ' Wait for trigger time
 
               ' Now synchronize to the beginning of the next packet.
               ' We sample only D- in the receiver. If we time out,
@@ -2107,7 +2107,7 @@ rx_cog_1
               ' since we may inadvertently reset the device.)
 
               waitpne   rx1_zero, rx1_pin
-              
+
 :sample_loop
               test      rx1_pin, ina wc         '  0
               rcr       t2, #1
@@ -2164,22 +2164,22 @@ rx_cog_1
 
               ' Stop either when we fill up the buffer, or when RX2 signals
               ' that it's detected a pseudo-EOP and set RX_DONE.
-              
+
               sub       rx1_iters, #1 wz
    if_nz      rdbyte    t2, rx1p_done wz
    if_z       jmp       #:restart
 
-              waitcnt   rx1_cnt, #0       
+              waitcnt   rx1_cnt, #0
               jmp       #:sample_loop
 
-rx1_pin       long      |< DMINUS   
+rx1_pin       long      |< DMINUS
 rx1_zero      long      0
 
 ' Parameters that are set up by Spin code prior to cognew()
 rx1p_done     long      0
 rx1p_buffer   long      0
 
-rx1_buffer    res       1                  
+rx1_buffer    res       1
 rx1_cnt       res       1
 rx1_iters     res       1
 t2            res       1
@@ -2208,17 +2208,17 @@ rx_cog_2
 :restart
               mov       rx2_buffer, rx2p_buffer
               mov       rx2_iters, #RX_BUFFER_WORDS
-                            
+
 :wait         rdlong    t4, par wz              ' Read trigger timestamp
         if_z  jmp       #:wait
               wrlong    rx2_zero, par           ' One-shot, zero it.
-                                                  
+
               waitcnt   t4, #0                  ' Wait for trigger time
               waitpne   rx2_zero, rx2_pin       ' Sync to SOP
 
               ' Save the SOP timestamp. We need this for our own calculations,
               ' plus our Spin code will use this to calculate received packet length.
-              
+
               mov       rx2_cnt, cnt
               wrlong    rx2_cnt, rx2p_sop
 
@@ -2228,17 +2228,17 @@ rx_cog_2
 
               add       rx2_cnt, #(16*8 - 5)
               jmp       #:first_sample
-        
+
 :sample_loop
 
               ' Justify the received word. Also detect our pseudo-EOP condition,
               ' when we've been idle (0) for 16 bits.
               shr       t4, #16 wz
-              
+
               add       rx2_buffer, #2
               wrword    t4, rx2_buffer
               add       rx2_buffer, #2
-              
+
               ' Update RX_DONE only after writing to the buffer.
               ' We're done if rx2_iters runs out, or if we're idle.
 
@@ -2282,7 +2282,7 @@ rx_cog_2
               rcr       t4, #1
 
               jmp       #:sample_loop
-              
+
 rx2_pin       long      |< DMINUS
 rx2_zero      long      0
 
@@ -2294,21 +2294,21 @@ rx2p_sop      long      0
 rx2_done_p    res       1
 rx2_time_p    res       1
 rx2_buffer    res       1
-rx2_iters     res       1                  
+rx2_iters     res       1
 rx2_cnt       res       1
 t4            res       1
 
               fit
 
 heap_end    ' Begin recyclable memory heap
-                                     
+
 DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

@@ -23,7 +23,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -56,7 +56,7 @@ CON
   REQ_SET_ERROR_CHAR    = $0740
   REQ_SET_LATENCY_TIMER = $0940
   REQ_GET_LATENCY_TIMER = $10c0
-  
+
 DAT
 
 bulkIn                  word    0
@@ -93,7 +93,7 @@ PUB Identify
   '' possible for FT232 chips to use vendor-specific vendor/product IDs.
   '' If you're using such a device, you can make the identification check
   '' yourself, and skip this function.
-  ''  
+  ''
   '' This function is meant to be non-invasive: it doesn't do any setup,
   '' nor does it try to communicate with the device. If your application
   '' needs to be compatible with several USB device classes, you can call
@@ -125,10 +125,10 @@ PUB Init | epd
   rxHead~
   rxCount~
   rxStatus~
-  
+
   hc.Configure
 
-  
+
 DAT
 ''
 ''==============================================================================
@@ -149,7 +149,7 @@ PUB SetBaud(baud) | divisor, div8
     divisor~
   elseif divisor == $4001
     divisor := 1
-    
+
   hc.Control(REQ_SET_BAUD_RATE, divisor, divisor >> 16)
 
 PUB Send(buffer, bytes)
@@ -198,14 +198,14 @@ PUB Receive(buffer, bufferSize) : actual | packet
       else
         ' Buffer is now non-empty
         rxCount := packet - 2
-        rxHead~ 
+        rxHead~
 
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

@@ -37,7 +37,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ Copyright (c) 2006-2009 Parallax, Inc.                    │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
@@ -60,7 +60,7 @@ CON
 
   ' Default buffer fill level for auto-flush
   AUTOFLUSH_LEVEL = RING_SIZE / 2
-  
+
   ' Newline character for line-based IO
   NL = 13
 
@@ -88,9 +88,9 @@ PUB Ring
     enqueue~
     dequeue~
     pendingEnq~
-  
+
   return @base
- 
+
 PUB Char(bytechr)
 {{Send single-byte character.  Waits for room in transmit buffer if necessary.
 This does not automatically flush data to the transmitter, since that would lead
@@ -103,14 +103,14 @@ may remain in the buffer for an unlimited amount of time.
 such as the infamous 'Nagle Algorithm' in TCP. Explicit flushing is the only
 algorithm supported by this particular ring implementation, since it avoids adding
 any more latency than is necessary.)
- 
+
   Parameter:
     bytechr - character (ASCII byte value) to send.}}
 
   if ((pendingEnq - dequeue) & RING_MASK) => AUTOFLUSH_LEVEL
     enqueue := pendingEnq
 
-  repeat until (dequeue <> ((pendingEnq + 1) & RING_MASK))  
+  repeat until (dequeue <> ((pendingEnq + 1) & RING_MASK))
 
   buffer[pendingEnq] := bytechr
   pendingEnq := (pendingEnq + 1) & RING_MASK
@@ -144,7 +144,7 @@ Waits until full string received.
   Parameter:
     stringptr - pointer to memory in which to store received string characters.
                 Memory reserved must be large enough for all string characters plus a zero terminator.}}
-    
+
   StrInMax(stringptr, -1)
 
 PUB StrInMax(stringptr, maxcount)
@@ -154,7 +154,7 @@ starting at stringptr.  Waits until either full string received or maxcount char
     stringptr - pointer to memory in which to store received string characters.
                 Memory reserved must be large enough for all string characters plus a zero terminator (maxcount + 1).
     maxcount  - maximum length of string to receive, or -1 for unlimited.}}
-    
+
   repeat while (maxcount--)                                                     'While maxcount not reached
     if (byte[stringptr++] := CharIn) == NL                                      'Get chars until NL
       quit
@@ -173,7 +173,7 @@ PUB Dec(value) | i, x
   i := 1_000_000_000                                                            'Initialize divisor
 
   repeat 10                                                                     'Loop for 10 digits
-    if value => i                                                               
+    if value => i
       Char(value / i + "0" + x*(i == 1))                                        'If non-zero digit, output digit; adjust for max negative
       value //= i                                                               'and digit from value
       result~~                                                                  'flag non-zero found
@@ -200,7 +200,7 @@ PUB Hex(value, digits)
   value <<= (8 - digits) << 2
   repeat digits
     Char(lookupz((value <-= 4) & $F : "0".."9", "A".."F"))
-  
+
 PUB CharCount : count
 {{Get count of characters in buffer. }}
 
@@ -214,8 +214,8 @@ PUB RxDiscard : count | enq
   enq := enqueue
 
   count := (enq - dequeue) & RING_MASK
-  dequeue := enq   
-    
+  dequeue := enq
+
 PUB RxCheck : bytechr
 {{Check if character received; return immediately.
   Returns: -1 if no byte received, $00..$FF if character received.}}
@@ -223,7 +223,7 @@ PUB RxCheck : bytechr
   bytechr~~
   if enqueue <> dequeue
     bytechr := buffer[dequeue]
-    dequeue := (dequeue + 1) & RING_MASK  
+    dequeue := (dequeue + 1) & RING_MASK
 
 PUB TxFlush
 {{ Make all queued TX data available for transmission. We don't automatically
@@ -236,14 +236,14 @@ it contains more than a configurable amount of buffered data. }}
 
   enqueue := pendingEnq
 
-    
+
 DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

@@ -28,7 +28,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -53,12 +53,12 @@ CON
   ' Allocate at least NUM_PAGES page-aligned pages. This means we may need
   ' up to one additional page prior to the allocated pages, to ensure alignment.
   TOTAL_LONGS = (NUM_PAGES+1) * PAGE_SIZE / 4
-  
+
   ' Entry offsets
   O_SEQUENCE = 0
   O_BDADDR   = O_SEQUENCE + 4
   O_KEY      = O_BDADDR + BDADDR_LEN
-  
+
 DAT
 
 ' Initialize to $FF to test overflow logic.
@@ -77,8 +77,8 @@ PRI OldestEntry : oldPtr | ptr
   repeat constant(NUM_KEYS - 1)
     ptr += ENTRY_LEN
     if LONG[ptr] < LONG[oldPtr]
-      oldPtr := ptr  
-  
+      oldPtr := ptr
+
 PRI NextGeneration : nextGen | ptr, id
   ' Calculate the next generation number. If overflow is detected, erase everything
 
@@ -94,8 +94,8 @@ PRI NextGeneration : nextGen | ptr, id
         Commit(ptr)
         ptr += ENTRY_LEN
       return 1
-  
-    ptr += ENTRY_LEN    
+
+    ptr += ENTRY_LEN
     nextGen #>= id
 
 PUB LookupKey(bdaddr) | ptr, bdaddrPtr, match, gen
@@ -127,7 +127,7 @@ PUB StoreKey(bdaddr, key) | newKey, gen
   '' key in the database.
 
   gen := NextGeneration
-  
+
   if not (newKey := LookupKey(bdaddr))
     newKey := OldestEntry
     bytemove(newKey += O_BDADDR, bdaddr, BDADDR_LEN)
@@ -144,15 +144,15 @@ PRI Commit(address) | shiftreg, bytecount
   dira[EEPROM_SCL]~~   ' Drive SCL
   outa[EEPROM_SCL]~    ' SCL low
   outa[EEPROM_SCL]~~   ' SCL high
-                       
+
   address &= !63
 
-  ' Issue page-write I2C commands. 
+  ' Issue page-write I2C commands.
 
   ' I2C Start
   dira[EEPROM_SDA]~~    ' Drive SDA low
   outa[EEPROM_SCL]~     ' Drive SCL low
-    
+
   ' We have a 32-bit data buffer that starts out filled with the three-byte header,
   ' then we re-fill it with longs from hub memory. We're sending the least significant
   ' byte first, but most significant bit first. To be consistent with this byte order,
@@ -160,7 +160,7 @@ PRI Commit(address) | shiftreg, bytecount
 
   shiftreg := EEPROM_ADDRESS | (address & $FF00) | (address << 16)
   bytecount := 3
-    
+
   ' One 64-byte pages: 16 data longs plus header
   repeat 17
 
@@ -177,11 +177,11 @@ PRI Commit(address) | shiftreg, bytecount
       dira[EEPROM_SDA]~                     ' Let SDA float
       outa[EEPROM_SCL]~~                    ' Drive SCL high
       if ina[EEPROM_SDA]                    ' Check for ACK
-        abort E_EEPROM 
+        abort E_EEPROM
       outa[EEPROM_SCL]~                     ' Drive SCL low
-  
+
       shiftreg ->= 16                       ' Next byte
-    
+
     shiftreg := LONG[address]
     address += 4
     bytecount := 4
@@ -195,14 +195,14 @@ PRI Commit(address) | shiftreg, bytecount
   ' This is just a really conservative hardcoded delay. It's 5ms at 96 MHz.
   ' (This takes less memory than polling for completion.)
   waitcnt(cnt + constant(96_000_000 / 1000 * 5))
-  
+
 DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

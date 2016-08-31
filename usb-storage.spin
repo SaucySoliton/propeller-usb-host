@@ -20,7 +20,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -42,18 +42,18 @@ CON
   E_CSW_LEN       = -104        ' Unexpected CSW length
   E_CSW_SIGNATURE = -105        ' Unexpected CSW signature
   E_CSW_TAG       = -106        ' Unexpected CSW tag
-  E_COMMAND_FAIL  = -107        ' SCSI command reported failure 
+  E_COMMAND_FAIL  = -107        ' SCSI command reported failure
   E_PHASE_ERROR   = -108        ' Mass storage protocol phase aerror
   E_CSW_STATUS    = -109        ' Other unsuccessful CSW status code
   E_INCOMPLETE    = -110        ' Read or write was incomplete
   E_SECTOR_SIZE   = -111        ' Disk has unsupported sector size
-  
+
   ' 512 bytes is the de-facto standard. This is also the only size
   ' supported by FSRW. So, that's what we mandate.
 
   SECTORSIZE  = 512
   SECTORSHIFT = 9
-  
+
   ' Defaults
 
   DEFAULT_TIMEOUT = 2000        ' 2 seconds
@@ -65,17 +65,17 @@ CON
   PROTOCOL_BULK_ONLY   = $50
 
   REQ_STORAGE_RESET    = $FF21
-  
+
   CBW_LEN              = 31     ' USB command block wrapper
   CSW_LEN              = 13     ' USB command status wrapper
   CB_LEN               = 16     ' Max SCSI command block
-  
+
   CBW_SIGNATURE_VALUE  = $43425355  ' "USBC"
   CSW_SIGNATURE_VALUE  = $53425355  ' "USBS"
-  
+
   DIR_OUT              = $00    ' CBW direction flags
   DIR_IN               = $80
-  
+
   CSW_STATUS_PASS      = $00
   CSW_STATUS_FAIL      = $01
   CSW_STATUS_PHASE_ERR = $02
@@ -93,7 +93,7 @@ cbw_transferLength      long    0               ' Placeholder
 cbw_flags               byte    0               ' Placeholder
 cbw_lun                 byte    0
 cbw_cbLength            byte    0
-cbw_cb                  byte    0[CB_LEN]       ' SCSI command block  
+cbw_cb                  byte    0[CB_LEN]       ' SCSI command block
                         byte    0               ' (Pad to 32 bytes)
 
 ' Command Status Wraper (CSW)
@@ -167,7 +167,7 @@ PUB Init | epd
   ' Look for the mass storage interface, and make sure we're compatible.
   ' The mass storage spec allows command formats other than SCSI, but we don't
   ' support them. And we only support the bulk-only protocol, not CBI.
-  
+
   epd := hc.FindInterface(CLASS_MASS_STORAGE)
   if not epd
     abort E_NO_INTERFACE
@@ -179,7 +179,7 @@ PUB Init | epd
     abort E_NOT_BULKONLY
 
   interfaceNum := BYTE[epd + hc#IFDESC_bInterfaceNumber]
-    
+
   ' Locate the device's bulk IN/OUT endpoints
 
   bulkIn~
@@ -205,7 +205,7 @@ PUB Init | epd
   if SECTORSIZE <> SCSI_RB_Long(4)
     abort E_SECTOR_SIZE
 
-  
+
 DAT
 ''
 ''==============================================================================
@@ -223,7 +223,7 @@ PUB ReadSectors(buffer, start, count)
   ' of 16 bits is enough to fill the prop's RAM hundreds of times over,
   ' and the 32-bit LBA will address 2 terabytes with the common 512-byte
   ' block size.
-  
+
   SCSI_CB_Begin(READ_10, 10)
   SCSI_CB_Long(2, start)
   SCSI_CB_Word(7, count)
@@ -234,7 +234,7 @@ PUB ReadSectors(buffer, start, count)
 PUB WriteSectors(buffer, start, count)
   '' Write sectors from 'buffer'.
   '' Writes 'count' disk sectors, starting at logical block address 'start'.
-  
+
   SCSI_CB_Begin(WRITE_10, 10)
   SCSI_CB_Long(2, start)
   SCSI_CB_Word(7, count)
@@ -263,7 +263,7 @@ PUB start_explicit(do, clk, di, ds)
 
   hc.Enumerate
   Init
-  
+
 PUB readblock(n, buf)
   '' FSRW Compatibility.
   ReadSectors(buf, n, 1)
@@ -281,7 +281,7 @@ DAT
 PUB StorageReset
   '' Issue a Bulk-Only Mass Storage Reset.
 
-  hc.Control(REQ_STORAGE_RESET, 0, interfaceNum) 
+  hc.Control(REQ_STORAGE_RESET, 0, interfaceNum)
   hc.ClearHalt(bulkIn)
   hc.ClearHalt(bulkOut)
 
@@ -295,8 +295,8 @@ PUB TestUnitReady(timeoutMS)
   '' Waits up to 'timeoutMS' for the device to respond. Aborts on error.
 
   SCSI_CB_Begin(TEST_UNIT_READY, 6)
-  SCSI_Command(0, 0, DIR_OUT, timeoutMS)  
-  
+  SCSI_Command(0, 0, DIR_OUT, timeoutMS)
+
 PUB SCSI_CB_Begin(opcode, length)
   '' Begin a new SCSI command buffer. Sets the length and the opcode.
   '' By default, the rest of the command will be all zeroes.
@@ -304,12 +304,12 @@ PUB SCSI_CB_Begin(opcode, length)
   bytefill(@cbw_cb, 0, CB_LEN)
   cbw_cbLength := length
   SCSI_CB_Byte(0, opcode)
-  
+
 PUB SCSI_CB_Byte(offset, value)
   '' Sets one byte to the SCSI command buffer.
 
   BYTE[@cbw_cb + offset] := value
-  
+
 PUB SCSI_CB_Word(offset, value)
   '' Sets one big-endian word in the SCSI command buffer
 
@@ -331,12 +331,12 @@ PUB SCSI_RB_Word(offset)
   '' Parse out one big-endian word from the SCSI_Query reply buffer
 
   return (SCSI_RB_Byte(offset) << 8) | SCSI_RB_Byte(offset+1)
-  
+
 PUB SCSI_RB_Long(offset)
   '' Parse out one big-endian long from the SCSI_Query reply buffer
 
   return (SCSI_RB_Word(offset) << 16) | SCSI_RB_Word(offset+2)
- 
+
 PUB SCSI_Command(buffer, dataLen, flags, timeoutMS) | deadline
   '' Issue the SCSI command which was constructed using the SCSI_CB_*
   '' functions. The command may be either a read or a write. "flags" should
@@ -350,7 +350,7 @@ PUB SCSI_Command(buffer, dataLen, flags, timeoutMS) | deadline
   '' Returns the "residue" (the difference between the requested transfer
   '' length and the actual length.)
 
-  deadline := cnt + 96_000 * timeoutMS  
+  deadline := cnt + 96_000 * timeoutMS
   cbw_transferLength := dataLen
   cbw_flags := flags
 
@@ -370,7 +370,7 @@ PRI SCSI_CommandTry(buffer, dataLen, flags)
   ' Aborts on error, otherwise returns the residue value.
 
   hc.BulkWrite(bulkOut, @cbw, CBW_LEN)
-  
+
   if dataLen
     if flags ' IN
       hc.BulkRead(bulkIn, buffer, dataLen)
@@ -395,7 +395,7 @@ PRI ReadCSW
 
     CSW_STATUS_PASS:
       return csw_dataResidue
-  
+
     CSW_STATUS_FAIL:
       abort E_COMMAND_FAIL
 
@@ -404,7 +404,7 @@ PRI ReadCSW
 
     other:
       abort E_CSW_STATUS
-  
+
 PUB SCSI_Query(replyLen, timeoutMS)
   '' Issue a small SCSI read into an internal reply buffer, which can
   '' be conveniently parsed using the SCSI_RB_* functions.
@@ -413,7 +413,7 @@ PUB SCSI_Query(replyLen, timeoutMS)
 
   return SCSI_Command(@reply_buf, replyLen, DIR_IN, timeoutMS)
 
-  
+
 CON
 
   ' SCSI opcodes
@@ -497,14 +497,14 @@ CON
   VERIFY_16                      = $8f
   SERVICE_ACTION_IN              = $9e
 
-                                     
+
 DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

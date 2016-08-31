@@ -15,7 +15,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -37,8 +37,8 @@ CON
   POS_HEXDUMP   = POS_TAG + 2
   POS_ASCII     = POS_HEXDUMP + 7 + 16*3
   POS_END       = POS_ASCII + 16
-  DIVIDER_WIDTH = POS_END - (POS_ENDTAG + 2) 
-  
+  DIVIDER_WIDTH = POS_END - (POS_ENDTAG + 2)
+
 DAT
 
 epoch          long  0
@@ -92,7 +92,7 @@ PUB Enumerate
   ' Use StartRxTx instead of Start, since we don't want the 1-second delay.
   term.StartRxTx(31, 30, 0, BAUD_RATE)
   term.clear
-  
+
   logBegin(string("Enumerate"))
   logStatus(\hc.Enumerate)
 
@@ -161,7 +161,7 @@ PUB InterruptRead(epd, buffer, length) : actual
       BluetoothEvent(buffer, length)
     elseif length == $40
       BluetoothACLRead(buffer, length)
-    else  
+    else
       logBegin(string("Intr   Rd"))
       term.hex(epd, 4)
       logComma
@@ -177,12 +177,12 @@ PUB InterruptRead(epd, buffer, length) : actual
 
 PUB BulkWrite(epd, buffer, length)
   BluetoothACLWrite(buffer, length)
-    
+
   result := \logStatus(\hc.BulkWrite(epd, buffer, length))
   hexDump(buffer, length)
   if result < 0
     abort
-     
+
 PUB BulkRead(epd, buffer, length) : actual
   BluetoothEventCont(buffer, length)
 
@@ -194,7 +194,7 @@ PUB DeviceDescriptor
 PUB ConfigDescriptor
   return hc.ConfigDescriptor
 PUB VendorID
-  return hc.VendorID  
+  return hc.VendorID
 PUB ProductID
   return hc.ProductID
 PUB NextDescriptor(ptrIn)
@@ -253,7 +253,7 @@ CON
   PORTC_NO_DEVICE  = hc#PORTC_NO_DEVICE
   PORTC_FULL_SPEED = hc#PORTC_FULL_SPEED
   PORTC_LOW_SPEED  = hc#PORTC_LOW_SPEED
-  
+
   ' Standard device requests.
 
   REQ_CLEAR_DEVICE_FEATURE     = $0100
@@ -275,7 +275,7 @@ CON
   REQ_SYNCH_FRAME              = $0c82
 
   ' Standard descriptor types.
-  
+
   DESC_DEVICE           = $0100
   DESC_CONFIGURATION    = $0200
   DESC_STRING           = $0300
@@ -286,7 +286,7 @@ CON
   DESCHDR_CONFIGURATION = $02_09
   DESCHDR_INTERFACE     = $04_09
   DESCHDR_ENDPOINT      = $05_07
-  
+
   ' Descriptor Formats
 
   DEVDESC_bLength             = 0
@@ -349,21 +349,21 @@ CON
   TT_ISOC      = $01
   TT_BULK      = $02
   TT_INTERRUPT = $03
-                
+
   ' Error codes
 
   E_SUCCESS       = 0
 
   E_NO_DEVICE     = -150        ' No device is attached
   E_LOW_SPEED     = -151        ' Low-speed devices are not supported
-  
+
   E_TIMEOUT       = -160        ' Timed out waiting for a response
   E_TRANSFER      = -161        ' Generic low-level transfer error
   E_CRC           = -162        ' CRC-16 mismatch
   E_TOGGLE        = -163        ' DATA0/1 toggle error
   E_PID           = -164        ' Invalid or malformed PID
   E_STALL         = -165        ' USB STALL response (pipe error)
-  
+
   E_OUT_OF_COGS   = -180        ' Not enough free cogs, can't initialize
   E_OUT_OF_MEM    = -181        ' Not enough space for the requested buffer sizes
   E_DESC_PARSE    = -182        ' Can't parse a USB descriptor
@@ -374,18 +374,18 @@ DAT
 ''==============================================================================
 '' Bluetooth Decoding
 ''==============================================================================
-  
+
 PRI BluetoothCommand(buf, length)
   logBegin(string("Command"))
   term.str(findName(@commandNameTable, UWORD(buf)))
-             
+
 PRI BluetoothEvent(buf, length)
   logBegin(string("Event"))
   term.str(findName(@eventNameTable, BYTE[buf]))
 
 PRI BluetoothEventCont(buffer, length)
   logBegin(string("Event... "))
-  
+
 PRI BluetoothACLWrite(buf, length)
   logBegin(string("ACL Write"))
   BluetoothACL(buf, length)
@@ -444,7 +444,7 @@ PRI BluetoothACL(buf, length) | channel, type, name, len
           if type & 2
             term.str(string(" CR"))
         logComma
-  
+
 PRI findName(table, value) : str | index
   ' Look up a string from a name table
 
@@ -457,7 +457,7 @@ PRI findName(table, value) : str | index
     repeat while BYTE[str]
       str++
     str++
-  
+
 DAT
 
 rfcommMCCTable
@@ -726,7 +726,7 @@ commandNameTable
  byte $02, $18, "Test_WriteLoopbackMode", 0
  byte $03, $18, "Test_EnableDeviceUnderTestMode", 0
  byte 0, 0, 0
- 
+
 eventNameTable
  byte $01, $00, "EV_InquiryComplete", 0
  byte $02, $00, "EV_InquiryResult", 0
@@ -770,9 +770,9 @@ DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

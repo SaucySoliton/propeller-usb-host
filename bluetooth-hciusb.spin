@@ -19,7 +19,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -52,13 +52,13 @@ CON
   E_NO_SOCKET     = -115        ' Out of sockets / Can't find matching socket
   E_ACL_LEN       = -116        ' ACL length mismatch error
   E_ACL_SYNC      = -117        ' Mismatched first/continuation ACL packets
-  
+
   ' Non-error result codes
 
   R_NONE          = 0           ' No result
   R_COMPLETE      = 1           ' Received a complete packet
   R_FRAGMENTED    = 2           ' Received part of a fragmented packet
-  
+
   ' Bluetooth USB HCI class constants
 
   CLASS_WIRELESS   = $E0
@@ -70,7 +70,7 @@ CON
   ' that's a lot more buffer space than we'll ever need. These smaller
   ' buffer sizes should work for everything except particularly long
   ' device names.
-  
+
   MAX_CMD_SIZE     = 64
   MAX_EVT_SIZE     = 64
 
@@ -85,12 +85,12 @@ CON
   ACL_HANDLE       = 0          ' Connection handle and status field
   ACL_TOTAL_LEN    = 2          ' Total length field
   ACL_HEADER_LEN   = 4          ' Header is 4 bytes per packet
-  
+
   ACL_PACKET_SIZE  = 64
   ACL_DATA_LEN     = ACL_PACKET_SIZE - ACL_HEADER_LEN
-  
+
   ACL_HANDLE_MASK  = $0FFF
-  
+
   ACL_PB_MASK      = %11 << 12  ' Packet Boundary flag
   ACL_PB_CONT      = %01 << 12
   ACL_PB_FIRST     = %10 << 12
@@ -169,7 +169,7 @@ PUB Init | epd
   epd := hc.FindInterface(CLASS_WIRELESS)
   if not Identify
     abort E_NOT_BLUETOOTH
-    
+
   ' Locate the device's bulk IN/OUT and interrupt IN endpoints
 
   bulkIn~
@@ -238,7 +238,7 @@ PUB ACLRead(buffer, continue) | chunk, chunkLen, chunkHandle, remaining, savedBy
     if remaining =< 0
       ' Packet is too long for our buffer
       abort E_FRAGMENTED
-      
+
     bytemove(@savedBytes, chunk, ACL_HEADER_LEN)
 
   result := \hc.InterruptRead(bulkIn, chunk, remaining)
@@ -249,13 +249,13 @@ PUB ACLRead(buffer, continue) | chunk, chunkLen, chunkHandle, remaining, savedBy
 
   if continue
     bytemove(chunk, @savedBytes, ACL_HEADER_LEN)
-  
+
   if result == hc#E_TIMEOUT or result == 0
     ' No data ready.
     ' Also: Ignore zero-length packets. We'll see one here if a
     ' previous non-fragmented ACL packet was exactly the same
     ' length as the USB max packet size.
-    return R_NONE                                     
+    return R_NONE
 
   if result < 0
     ' Other receive error
@@ -264,12 +264,12 @@ PUB ACLRead(buffer, continue) | chunk, chunkLen, chunkHandle, remaining, savedBy
   if result < ACL_HEADER_LEN
     ' Too short!
     abort E_ACL_LEN
-  
+
   if (chunkLen + ACL_HEADER_LEN) <> result
     ' ACL header length doesn't match USB packet length.
     ' Note that "ACL_TOTAL_LEN" isn't the total after packet
     ' assembly, that's only in the L2CAP header.
-    abort E_ACL_LEN 
+    abort E_ACL_LEN
 
   if (chunkHandle & ACL_PB_MASK) <> lookupz(continue: ACL_PB_FIRST, ACL_PB_CONT)
     ' Out of sync: This wasn't the first packet, it was a continuation
@@ -322,10 +322,10 @@ PUB Cmd32(l)
 
   Cmd16(l)
   Cmd16(l >> 16)
-  
+
 PUB CmdString(str)
   '' Append a zero-terminated string to the current HCI command
-                         
+
   repeat strsize(str)
     Cmd8(BYTE[str++])
 
@@ -358,14 +358,14 @@ PUB EvtPoll | retval, length
   hc.FrameWait(1)
 
   evtPointer := @evtParams
-  
+
   ' Poll for exactly one packet. This tells us how big the event is.
   retval := \hc.InterruptRead(intrIn, @hciEvent, EVT_PACKET_SIZE)
   if retval == hc#E_TIMEOUT
     return 0
   elseif retval == hc#E_PID
     ' XXX: Where are these coming from?
-    return 0  
+    return 0
   elseif retval < 0
     abort retval
   elseif retval < 2
@@ -381,12 +381,12 @@ PUB EvtPoll | retval, length
 
   evtNumParams <#= constant(MAX_EVT_PARAMS - 1)
   length := evtNumParams + 2 - retval
-  
+
   if length > 0
     if hc.BulkRead(intrIn, @hciEvent + retval, length) <> length
       abort E_SHORT_EVT
 
-  return evtOpcode  
+  return evtOpcode
 
 PUB EvtSize
   '' Return the number of event parameter bytes remaining.
@@ -399,7 +399,7 @@ PUB Evt8
   '' Consumes one byte from the event parameter list, and returns it.
 
   evtNumParams--
-  return BYTE[evtPointer++] 
+  return BYTE[evtPointer++]
 
 PUB Evt16
   '' Consumes a 16-bit word from the event parameter list, and returns it.
@@ -421,7 +421,7 @@ PUB EvtBuffer(len)
   evtNumParams -= len
   evtPointer += len
 
-  
+
 CON
 
   ' High bytes for HCI commands, based on OGF
@@ -592,9 +592,9 @@ DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

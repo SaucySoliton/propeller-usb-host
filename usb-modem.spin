@@ -13,7 +13,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -39,7 +39,7 @@ CON
   CDC_DATA_IF     = 10
 
   RX_BUFFER_SIZE  = 64
-  
+
 DAT
 
 bulkIn                  word    0
@@ -87,11 +87,11 @@ PUB Init | epd
 
   if BYTE[hc.DeviceDescriptor + hc#DEVDESC_bDeviceClass] <> CDC_CLASS
     abort E_NOT_CDC
-  
+
   epd := hc.FindInterface(CDC_DATA_IF)
   if not epd
     abort E_NO_INTERFACE
-    
+
   ' Locate the device's bulk IN/OUT endpoints
 
   bulkIn~
@@ -112,7 +112,7 @@ PUB Init | epd
   ' Clear the receive buffer
   rxHead~
   rxCount~
-  
+
 DAT
 ''
 ''==============================================================================
@@ -159,14 +159,14 @@ PUB Receive(buffer, bufferSize) : actual | packet
       else
         ' Buffer is now non-empty
         rxCount := packet - 2
-        rxHead~ 
+        rxHead~
 
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │

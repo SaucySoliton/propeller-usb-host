@@ -27,7 +27,7 @@ The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
+ │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │
  │ See end of file for terms of use.                         │
  └───────────────────────────────────────────────────────────┘
 
@@ -55,16 +55,16 @@ PUB start
   bt.SetClass(bt#COD_Computer)
   bt.SetDiscoverable
   bt.SetFixedPIN(string("0000"))
-  
+
   bt.AddService(@serialService)
   bt.ListenRFCOMM(RFCOMM_CHANNEL, rxr.Ring, txr.Ring)
-  
+
 DAT
 
 serialService word 0
 
     byte  bt#DE_Seq8, @t0 - @h0             ' <sequence>
-h0      
+h0
 
     byte    bt#DE_Uint16, $00,$00           '   ServiceRecordHandle
     byte    bt#DE_Uint32, $00,$01,$00,$02   '     (Arbitrary unique value)
@@ -94,7 +94,7 @@ t5
 h16 byte      bt#DE_Uint16, $65,$6e         '     Language
     byte      bt#DE_Uint16, $00,$6a         '     Encoding
     byte      bt#DE_Uint16, $01,$00         '     Base attribute ID value
-t16             
+t16
 
     byte    bt#DE_Uint16, $00,$09           '   BluetoothProfileDescriptorList
     byte    bt#DE_Seq8, @t7 - @h7           '   <sequence>
@@ -102,7 +102,7 @@ h7  byte      bt#DE_Seq8, @t8 - @h8         '     <sequence>
 h8  byte      bt#DE_UUID16, $11,$01         '       SerialPort
     byte      bt#DE_Uint16, $01,$00         '       Version 1.0
 t8
-t7              
+t7
 
     byte    bt#DE_Uint16, $01,$00           '   ServiceName + Language Base
     byte    bt#DE_Text8, @t19 - @h19
@@ -112,7 +112,7 @@ t19
 t0
 
 DAT
- '' bluetooth-ring style I/O functions 
+ '' bluetooth-ring style I/O functions
 
 PUB Char(bytechr)
   txr.Char(bytechr)
@@ -142,7 +142,7 @@ PUB Dec(value) | i, x
 PUB Bin(value, digits)
   txr.Bin(value, digits)
   txr.TxFlush
-  
+
 PUB Hex(value, digits)
   txr.Hex(value, digits)
   txr.TxFlush
@@ -155,7 +155,7 @@ PUB RxDiscard : count
 
 PUB RxCheck : bytechr
   return rxr.RxCheck
-  
+
 DAT
  '' FullDuplexSerial compatibility functions
 
@@ -173,9 +173,9 @@ DAT
 {{
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │                                                            
+│                                                   TERMS OF USE: MIT License                                                  │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │ 
+│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
 │files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
 │modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
 │is furnished to do so, subject to the following conditions:                                                                   │
