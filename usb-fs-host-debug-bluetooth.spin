@@ -11,8 +11,8 @@ Usage:
   In the module(s) you want to debug, temporarily replace the
   "usb-fs-host" OBJ reference with "usb-fs-host-debug-blyetooth".
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/usb-fs-host-debug-bluetooth.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               

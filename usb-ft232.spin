@@ -19,8 +19,8 @@ TTL-level serial port.
 My understanding of the FT232 protocol is based on the source to
 the Linux ftdi_sio kernel module, by Greg K-H and Bill Ryder.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/usb-ft232.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               

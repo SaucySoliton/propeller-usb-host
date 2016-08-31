@@ -33,8 +33,8 @@ or receive. A bidirectional socket will have two rings. If you're
 using a ring for transmit, never call its receive functions, and
 vice versa! Each ring must have only one reader and one writer.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/bluetooth-ring.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               

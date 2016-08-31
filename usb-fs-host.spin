@@ -15,8 +15,8 @@ powerful microcontroller like the Propeller. So naturally, I
 had to cut some corners. See the sizable list of limitations and
 caveats below.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/usb-fs-host.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2011 M. Elizabeth Scott <beth@scanlime.org> │               

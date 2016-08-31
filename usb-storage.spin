@@ -16,8 +16,8 @@ protocol, and has limited error handling ability. This module
 provides support for raw SCSI commands, and it implements simple
 block-level read/write entry points.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/usb-storage.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               

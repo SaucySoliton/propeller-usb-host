@@ -24,8 +24,8 @@ in the EEPROM's lifetime, so we should not expect overflow. If overflow
 occurs, it means there was data corruption- so the whole keyring should
 be zeroed.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/bluetooth-keyring.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               

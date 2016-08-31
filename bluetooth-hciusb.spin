@@ -15,8 +15,8 @@ using the USB transport, via the software USB host controller object.
 See usb-fs-host.spin for information on attaching USB device hardware
 to the Propeller.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/bluetooth-hciusb.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               

@@ -8,8 +8,8 @@ Using the bluetooth-hciusb and usb-fs-host objects, this
 directly supports USB Bluetooth adapters. This module implements
 application-level protocols: L2CAP, RFCOMM, and SDP.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/bluetooth-host.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               

@@ -23,8 +23,8 @@ NOTE: This module auto-flushes all output before returning to the caller,
       due to sending lots of tiny packets. See bluetooth-ring.TxFlush for
       more on this issue.
 
-The latest version of this file should always be at:
-http://svn.navi.cx/misc/trunk/propeller/usb-host/bluetooth-serial.spin
+The latest version of this file lives at
+https://github.com/scanlime/propeller-usb-host
 
  ┌───────────────────────────────────────────────────────────┐
  │ Copyright (c) 2010 M. Elizabeth Scott <beth@scanlime.org> │               
