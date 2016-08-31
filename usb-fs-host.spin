@@ -1,7 +1,7 @@
-﻿{{
+{{
 
- usb-fs-host  ver 1.1
-──────────────────────────────────────────────────────────────────
+usb-fs-host
+------------------------------------------------------------------
 
 This is a software implementation of a simple full-speed
 (12 Mb/s) USB 1.1 host controller for the Parallax Propeller.
@@ -18,37 +18,35 @@ caveats below.
 The latest version of this file lives at
 https://github.com/scanlime/propeller-usb-host
 
- ┌───────────────────────────────────────────────────────────┐
- │ Copyright (c) 2011 M. Elizabeth Scott <beth@scanlime.org> │
- │ See end of file for terms of use.                         │
- └───────────────────────────────────────────────────────────┘
+Copyright (c) 2010-2016 M. Elizabeth Scott <beth@scanlime.org>
+See end of file for terms of use.
 
 
 Hardware Requirements
-─────────────────────
+---------------------
 
  - 96 MHz (overclocked) Propeller
- - USB D- attached to P0 with a 47Ω series resistor
- - USB D+ attached to P1 with a 47Ω series resistor
- - Pull-down resistors (~47kΩ) from USB D- and D+ to ground
+ - USB D- attached to P0 with a 47 ohm series resistor
+ - USB D+ attached to P1 with a 47 ohm series resistor
+ - Pull-down resistors (~47k ohm) from USB D- and D+ to ground
 
-  ┌───────────────┐  USB Host (Type A) Socket
-  │ ─┬┬─┬┬─┬┬─┬┬─ │
-  │ 1└┘2└┘3└┘4└┘  │  1: Vbus (+5v)  Red
-  ├───────────────┤  2: D-          White
-                     3: D+          Green
-                     4: GND         Black
+  +-------------------+  USB Host (Type A) Socket
+  | ----------------- |
+  |  [1] [2] [3] [4]  |  1: Vbus (+5v)  Red
+  |-------------------|  2: D-          White
+                         3: D+          Green
+                         4: GND         Black
 
-                +5v
-                  ┌┐
-      2x 47Ω     └─┤│ (1) Vbus
-  P0 ─────┳─────┤│ (2) D-
-  P1 ─────┼─┳───┤│ (3) D+
-             │ │ ┌─┤│ (4) GND
-             │ │ │ └┘
-     2x 47kΩ   │
-             │ │ │
-               
+              +5v
+                |   +-----+
+      2x 47ohm  +---| [1] | Vbus
+  P0 >---/\/--+-----| [2] | D-
+  P1 >---/\/--|-+---| [3] | D+
+              | | +-| [4] | GND
+              | | | +-----+
+      2x 47k  / / |
+              | | |
+              - - -
 
   Note: For maximum compatibility and at least some semblance of
         USB spec compliance, all four of these resistors are
@@ -67,7 +65,7 @@ Hardware Requirements
         P0 and P7, inclusive.
 
 Limitations and Caveats
-───────────────────────
+-----------------------
 
  - Supports only a single device.
    (One host controller, one port, no hubs.)
@@ -102,7 +100,7 @@ Limitations and Caveats
    devices- a babble condition can overwrite cog memory.)
 
 Theory of Operation
-───────────────────
+-------------------
 
 With the Propeller overclocked to 96 MHz, we have 8 clock cycles
 (2 instructions) for every bit. That isn't nearly enough! So, we
@@ -141,7 +139,7 @@ effective "deferred ACK" strategy for IN transfers.
 
 
 Programming Model
-─────────────────
+-----------------
 
 This should look a little familiar to anyone who's written USB
 drivers for a PC operating system, or used a user-level USB library
@@ -2305,19 +2303,18 @@ heap_end    ' Begin recyclable memory heap
 DAT
 {{
 
-┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                                   TERMS OF USE: MIT License                                                  │
-├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    │
-│files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,    │
-│modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software│
-│is furnished to do so, subject to the following conditions:                                                                   │
-│                                                                                                                              │
-│The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.│
-│                                                                                                                              │
-│THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE          │
-│WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR         │
-│COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,   │
-│ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                         │
-└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+TERMS OF USE: MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 }}
