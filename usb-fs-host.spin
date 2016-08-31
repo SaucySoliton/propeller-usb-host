@@ -1009,7 +1009,7 @@ PUB WriteData(pid, token, buffer, length, togglePtr, retries)
   ' if the device responds with a NAK.
 
   repeat
-    SendToken(pid, token)
+    SendToken(pid, token, 10)
     Command(OP_TX_BEGIN, BYTE[togglePtr])      ' DATA0/1
 
     if length
@@ -1048,7 +1048,7 @@ PUB RequestDataIN(token, txrxFlag, togglePtr, retries)
   ' Aborts on error, otherwise returns the EOP timestamp.
 
   repeat
-    SendToken(PID_IN, token)
+    SendToken(PID_IN, token, 0)
 
     Command(OP_TXRX, txrxFlag)
     Sync
@@ -1183,12 +1183,12 @@ PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
   ' Out of CRC retries
   abort
 
-PUB SendToken(pid, token)
+PUB SendToken(pid, token, delayAfter)
   ' Enqueue a token in the TX buffer
 
   Command(OP_TX_BEGIN, pid)
   Command(OP_TX_DATA_16, token)
-  Command(OP_TX_END, 10)
+  Command(OP_TX_END, delayAfter)
 
 
 DAT
