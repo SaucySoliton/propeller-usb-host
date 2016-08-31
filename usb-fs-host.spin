@@ -1018,7 +1018,7 @@ PUB WriteData(pid, token, buffer, length, togglePtr, retries)
       Command(OP_TX_DATA_PTR, buffer)
 
     Command(OP_TX_CRC16, 0)
-    Command(OP_TX_END, 4)
+    Command(OP_TX_END, 1)
     Command(OP_TXRX, TXRX_TX_RX)
 
     Command(OP_RX_PID, 0)
