@@ -32,7 +32,7 @@ CON
 
   ' Serial port
 
-  BAUD_RATE = 1000000
+  BAUD_RATE = 115200
 
   ' Column positions
 
@@ -49,7 +49,18 @@ epoch          long  0
 epochSec       long  0
 hideFrameWait  byte  0
 
-PRI logBegin(name) | timediff
+
+PUB Start
+  epoch := cnt
+  epochSec~
+
+  ' Use StartRxTx instead of Start, since we don't want the 1-second delay.
+  term.StartRxTx(31, 30, 0, BAUD_RATE)
+  term.clear
+
+  hc.Start
+
+PUB logBegin(name) | timediff
   hideFrameWait~                     ' Only hide consecutive FrameWaits.
 
   term.char(term#NL)
@@ -60,16 +71,16 @@ PRI logBegin(name) | timediff
   term.positionX(POS_ENDTAG)
   term.str(string("] "))
 
-PRI logStatus(code)
+PUB logStatus(code)
   term.str(string(" -> "))
   term.dec(result := code)
   if result < 0
     abort
 
-PRI logComma
+PUB logComma
   term.str(string(", "))
 
-PRI logTimestamp | now
+PUB logTimestamp | now
   ' Log a timestamp, in seconds and milliseconds.
 
   ' To avoid rollover, eat full seconds by incrementing epochSec and moving epoch forward.
@@ -82,7 +93,7 @@ PRI logTimestamp | now
   term.char(".")
   dec3((now - epoch) / 96_000)
 
-PRI dec3(n)
+PUB dec3(n)
   ' 3-digit unsigned decimal number, with leading zeroes
   term.char("0" + ((n / 100) // 10))
   term.char("0" + ((n / 10) // 10))
@@ -97,19 +108,17 @@ PUB FrameWait(f)
   hideFrameWait~~
 
 PUB Enumerate
-  epoch := cnt
-  epochSec~
-
-  ' Use StartRxTx instead of Start, since we don't want the 1-second delay.
-  term.StartRxTx(31, 30, 0, BAUD_RATE)
-  term.clear
-
   logBegin(string("Enumerate"))
   logStatus(\hc.Enumerate)
 
 PUB Configure
   logBegin(string("Configure"))
   logStatus(\hc.Configure)
+
+PUB ReadConfiguration(index)
+  logBegin(string("ReadConfiguration"))
+  term.hex(index, 2)
+  logStatus(\hc.ReadConfiguration(index))
 
 PUB ClearHalt(epd)
   logBegin(string("ClearHalt"))
@@ -227,6 +236,11 @@ PUB EndpointType(epd)
   return hc.EndpointType(epd)
 PUB UWORD(addr)
   return hc.UWORD(addr)
+PUB GetPortConnection
+  return hc.GetPortConnection
+PUB DefaultMaxPacketSize0
+  return hc.DefaultMaxPacketSize0
+
 
 PRI hexDump(buffer, bytes) | addr, x, b, lastCol
   ' A basic 16-byte-wide hex/ascii dump
@@ -262,12 +276,158 @@ PRI hexDump(buffer, bytes) | addr, x, b, lastCol
 
 CON
 
+  NUM_COGS = 3
+
+  ' Transmit / Receive Size limits.
+  '
+  ' Transmit size limit is based on free Cog RAM. It can be increased if we save space
+  ' in the cog by optimizing the code or removing other data. Receive size is limited only
+  ' by available hub ram.
+  '
+  ' Note that if TX_BUFFER_WORDS is too large the error is detected at compile-time, but
+  ' if RX_BUFFER_WORDS is too large we won't detect the error until Start is running!
+
+  TX_BUFFER_WORDS = 205
+  RX_BUFFER_WORDS = 256
+
+  ' Maximum stored configuration descriptor size, in bytes. If the configuration
+  ' descriptor is longer than this, we'll truncate it. Must be a multiple of 4.
+
+  CFGDESC_BUFFER_LEN = 256
+
+  ' USB data pins.
+  '
+  ' Important: Both DMINUS and DPLUS must be <= 8, since we
+  '            use pin masks in instruction literals, and we
+  '            assume we're using the first video generator bank.
+
+  DMINUS = 0
+  DPLUS = 1
+
+  ' This module can be very challenging to debug. To make things a little bit easier,
+  ' there are several places where debug pin masks are OR'ed into our DIRA values
+  ' at compile-time. This doesn't use any additional memory. With a logic analyzer,
+  ' you can use this to see exactly when the bus is being driven, and by what code.
+  '
+  ' To use this, pick some pin(s) to use, put their bit masks here. Attach a pull-up
+  ' resistor and logic analyzer probe to each pin. To disable, set all values to zero.
+  '
+  ' Since the masks must fit in an instruction's immediate data, you must use P0 through P8.
+
+  DEBUG_ACK_MASK   = 0
+  DEBUG_TX_MASK    = 0
+
+  ' Low-level debug flags, settable at runtime
+
+  DEBUGFLAG_NO_CRC = $01
+
+  ' Output bus states
+  BUS_MASK  = (|< DPLUS) | (|< DMINUS)
+  STATE_J   = |< DPLUS
+  STATE_K   = |< DMINUS
+  STATE_SE0 = 0
+  STATE_SE1 = BUS_MASK
+
+  ' Retry options
+
+  MAX_TOKEN_RETRIES    = 200
+  MAX_CRC_RETRIES      = 200
+  TIMEOUT_FRAME_DELAY  = 10
+
+  ' Number of CRC error retry attempts
+
+  ' Offsets in EndpointTable
+  EPTABLE_SHIFT      = 2        ' log2 of entry size
+  EPTABLE_TOKEN      = 0        ' word
+  EPTABLE_TOGGLE_IN  = 2        ' byte
+  EPTABLE_TOGGLE_OUT = 3        ' byte
+
   ' Port connection status codes
-  PORTC_NO_DEVICE  = hc#PORTC_NO_DEVICE
-  PORTC_FULL_SPEED = hc#PORTC_FULL_SPEED
-  PORTC_LOW_SPEED  = hc#PORTC_LOW_SPEED
+  PORTC_NO_DEVICE  = STATE_SE0     ' No device (pull-down resistors in host)
+  PORTC_FULL_SPEED = STATE_J       ' Full speed: pull-up on D+
+  PORTC_LOW_SPEED  = STATE_K       ' Low speed: pull-up on D-
+  PORTC_INVALID    = STATE_SE1     ' Buggy device? Electrical transient?
+  PORTC_NOT_READY  = $FF           ' Haven't checked port status yet
+
+  ' Command opcodes for the controller cog.
+
+  OP_NOP           = 0                 ' Do nothing
+  OP_RESET         = 1                 ' Send a USB Reset signal   '
+  OP_TX_BEGIN      = 2                 ' Start a TX packet. Includes 8-bit PID
+  OP_TX_END        = 3                 ' End a TX packet, arg = # of extra idle bits after
+  OP_TXRX          = 4                 ' Transmit and/or receive packets
+  OP_TX_DATA_16    = 5                 ' Encode and store a 16-bit word
+  OP_TX_DATA_PTR   = 6                 ' Encode data from hub memory.
+                                       '   Command arg: pointer
+                                       '   "result" IN: Number of bytes
+  OP_TX_CRC16      = 7                 ' Encode  a 16-bit CRC of all data since the PID
+  OP_RX_PID        = 8                 ' Decode and return a 16-bit PID word, reset CRC-16
+  OP_RX_DATA_PTR   = 9                 ' Decode data to hub memory.
+                                       '   Command arg: pointer
+                                       '   "result" IN: Max number of bytes
+                                       '   result OUT:  Actual number of bytes
+  OP_RX_CRC16      = 10                ' Decode and check CRC. Returns (actual XOR expected)
+  OP_SOF_WAIT      = 11                ' Wait for one SOF to be sent
+
+  ' OP_TXRX parameters
+
+  TXRX_TX_ONLY     = %00
+  TXRX_TX_RX       = %01
+  TXRX_TX_RX_ACK   = %11
+
+  ' USB PID values / commands
+
+  PID_OUT    = %1110_0001
+  PID_IN     = %0110_1001
+  PID_SOF    = %1010_0101
+  PID_SETUP  = %0010_1101
+  PID_DATA0  = %1100_0011
+  PID_DATA1  = %0100_1011
+  PID_ACK    = %1101_0010
+  PID_NAK    = %0101_1010
+  PID_STALL  = %0001_1110
+  PID_PRE    = %0011_1100
+
+  ' NRZI-decoded representation of a SYNC field, and PIDs which include the SYNC.
+  ' These are the form of values returned by OP_RX_PID.
+
+  SYNC_FIELD      = %10000000
+  SYNC_PID_ACK    = SYNC_FIELD | (PID_ACK << 8)
+  SYNC_PID_NAK    = SYNC_FIELD | (PID_NAK << 8)
+  SYNC_PID_STALL  = SYNC_FIELD | (PID_STALL << 8)
+  SYNC_PID_DATA0  = SYNC_FIELD | (PID_DATA0 << 8)
+  SYNC_PID_DATA1  = SYNC_FIELD | (PID_DATA1 << 8)
+
+  ' USB Tokens (Device ID + Endpoint) with pre-calculated CRC5 values.
+  ' Since we only support a single USB device, we only need tokens for
+  ' device 0 (the default address) and device 1 (our arbitrary device ID).
+  ' For device 0, we only need endpoint zero. For device 1, we include
+  ' tokens for every possible endpoint.
+  '
+  '                  CRC5  EP#  DEV#
+  TOKEN_DEV0_EP0  = %00010_0000_0000000
+  TOKEN_DEV1_EP0  = %11101_0000_0000001
+  TOKEN_DEV1_EP1  = %01011_0001_0000001
+  TOKEN_DEV1_EP2  = %11000_0010_0000001
+  TOKEN_DEV1_EP3  = %01110_0011_0000001
+  TOKEN_DEV1_EP4  = %10111_0100_0000001
+  TOKEN_DEV1_EP5  = %00001_0101_0000001
+  TOKEN_DEV1_EP6  = %10010_0110_0000001
+  TOKEN_DEV1_EP7  = %00100_0111_0000001
+  TOKEN_DEV1_EP8  = %01001_1000_0000001
+  TOKEN_DEV1_EP9  = %11111_1001_0000001
+  TOKEN_DEV1_EP10 = %01100_1010_0000001
+  TOKEN_DEV1_EP11 = %11010_1011_0000001
+  TOKEN_DEV1_EP12 = %00011_1100_0000001
+  TOKEN_DEV1_EP13 = %10101_1101_0000001
+  TOKEN_DEV1_EP14 = %00110_1110_0000001
+  TOKEN_DEV1_EP15 = %10000_1111_0000001
 
   ' Standard device requests.
+  '
+  ' This encodes the first two bytes of the SETUP packet into
+  ' one word-sized command. The low byte is bmRequestType,
+  ' the high byte is bRequest.
 
   REQ_CLEAR_DEVICE_FEATURE     = $0100
   REQ_CLEAR_INTERFACE_FEATURE  = $0101
@@ -288,6 +448,13 @@ CON
   REQ_SYNCH_FRAME              = $0c82
 
   ' Standard descriptor types.
+  '
+  ' These identify a descriptor in REQ_GET_DESCRIPTOR,
+  ' via the high byte of wValue. (wIndex is the language ID.)
+  '
+  ' The 'DESCHDR' variants are the full descriptor header,
+  ' including type and length. This matches the first two bytes
+  ' of any such static-length descriptor.
 
   DESC_DEVICE           = $0100
   DESC_CONFIGURATION    = $0200
@@ -363,19 +530,45 @@ CON
   TT_BULK      = $02
   TT_INTERRUPT = $03
 
-  ' Error codes
+  ' Negative error codes. Most functions in this library can call
+  ' "abort" with one of these codes.
+  '
+  ' So that multiple levels of the software stack can share
+  ' error codes, we define a few reserved ranges:
+  '
+  '   -1 to -99    : Application
+  '   -100 to -150 : Device or device class driver
+  '   -150 to -199 : USB host controller
+  '
+  ' Within the USB host controller range:
+  '
+  '   -150 to -159 : Device connectivity errors
+  '   -160 to -179 : Low-level transfer errors
+  '   -180 to -199 : High-level errors (parsing, resource exhaustion)
+  '
+  ' When adding new errors, please keep existing errors constant
+  ' to avoid breaking other modules who may depend on these values.
+  ' (But if you're writing another module that uses these values,
+  ' please use the constants from this object rather than hardcoding
+  ' them!)
 
   E_SUCCESS       = 0
 
   E_NO_DEVICE     = -150        ' No device is attached
   E_LOW_SPEED     = -151        ' Low-speed devices are not supported
+  E_PORT_BOUNCE   = -152        ' Port connection state changing during Enumerate
 
   E_TIMEOUT       = -160        ' Timed out waiting for a response
   E_TRANSFER      = -161        ' Generic low-level transfer error
-  E_CRC           = -162        ' CRC-16 mismatch
+  E_CRC           = -162        ' CRC-16 mismatch and/or babble condition
   E_TOGGLE        = -163        ' DATA0/1 toggle error
-  E_PID           = -164        ' Invalid or malformed PID
+  E_PID           = -164        ' Invalid or malformed PID and/or no response
   E_STALL         = -165        ' USB STALL response (pipe error)
+
+  E_DEV_ADDRESS   = -170        ' Enumeration error: Device addressing
+  E_READ_DD_1     = -171        ' Enumeration error: First device descriptor read
+  E_READ_DD_2     = -172        ' Enumeration error: Second device descriptor read
+  E_READ_CONFIG   = -173        ' Enumeration error: Config descriptor read
 
   E_OUT_OF_COGS   = -180        ' Not enough free cogs, can't initialize
   E_OUT_OF_MEM    = -181        ' Not enough space for the requested buffer sizes
