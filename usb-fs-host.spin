@@ -237,7 +237,7 @@ CON
 
   ' Retry options
 
-  MAX_TOKEN_RETRIES    = 200    '
+  MAX_TOKEN_RETRIES    = 200
   MAX_CRC_RETRIES      = 200
   TIMEOUT_FRAME_DELAY  = 10
 
