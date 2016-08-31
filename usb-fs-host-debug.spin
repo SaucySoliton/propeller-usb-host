@@ -74,6 +74,9 @@ PUB logBegin(name) | timediff
 PUB logStatus(code)
   term.str(string(" -> "))
   term.dec(result := code)
+  if result == E_PID
+    term.char(":")
+    term.hex(hc.LastPIDError, 4)
   if result < 0
     abort
 
@@ -240,6 +243,8 @@ PUB GetPortConnection
   return hc.GetPortConnection
 PUB DefaultMaxPacketSize0
   return hc.DefaultMaxPacketSize0
+PUB LastPIDError
+  return hc.LastPIDError
 
 
 PRI hexDump(buffer, bytes) | addr, x, b, lastCol

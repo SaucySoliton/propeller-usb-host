@@ -498,6 +498,7 @@ heap_top      word      0                       ' Top of recycled memory heap
 buf_dd        word      0                       ' Device descriptor buffer pointer
 buf_cfg       word      0                       ' Configuration descriptor buffer pointer
 buf_setup     word      0                       ' SETUP packet buffer pointer
+last_pid_err  word      0                       ' Details from the last E_PID error
 
 isRunning     byte      0
 portc         byte      PORTC_NOT_READY         ' Port connection status
@@ -1039,6 +1040,7 @@ PUB WriteData(pid, token, buffer, length, togglePtr, retries)
         return E_SUCCESS
 
       other:
+        last_pid_err := txc_result
         abort E_PID
 
 PUB RequestDataIN(token, txrxFlag, togglePtr, retries)
@@ -1076,6 +1078,7 @@ PUB RequestDataIN(token, txrxFlag, togglePtr, retries)
         return
 
       other:
+        last_pid_err := txc_result
         abort E_PID
 
 PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries)
@@ -1184,11 +1187,16 @@ PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
   abort
 
 PUB SendToken(pid, token, delayAfter)
-  ' Enqueue a token in the TX buffer
+  '' Enqueue a token in the TX buffer
 
   Command(OP_TX_BEGIN, pid)
   Command(OP_TX_DATA_16, token)
   Command(OP_TX_END, delayAfter)
+
+PUB LastPIDError
+  '' Return the raw 16-bit frame from the last E_PID error
+  
+  return last_pid_err
 
 
 DAT
