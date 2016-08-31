@@ -1220,6 +1220,14 @@ PUB Command(cmd, arg) | packed
   Sync
   txc_command := packed
 
+PUB CommandResult
+  Sync
+  return txc_result
+
+PUB CommandExtra(arg)
+  Sync
+  txc_result := arg
+
 
 DAT
 

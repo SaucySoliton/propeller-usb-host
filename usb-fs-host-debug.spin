@@ -213,6 +213,32 @@ PUB BulkRead(epd, buffer, length) : actual
   result := logStatus(\hc.BulkRead(epd, buffer, length))
   hexDump(buffer, result)
 
+PUB DataIN(token, buffer, length, maxPacketLen, togglePtr, txrxFlag, tokenRetries, crcRetries)
+  logBegin(string("DataIN  "))
+  result := logStatus(\hc.DataIN(token, buffer, length, maxPacketLen, togglePtr, txrxFlag, tokenRetries, crcRetries))
+  hexDump(buffer, result)
+
+PUB WriteData(pid, token, buffer, length, togglePtr, retries)
+  logBegin(string("WrData  "))
+  return hc.WriteData(pid, token, buffer, length, togglePtr, retries)
+
+PUB RequestDataIN(token, txrxFlag, togglePtr, retries)
+  logBegin(string("RqDataIN"))
+  result := logStatus(\hc.RequestDataIN(token, txrxFlag, togglePtr, retries))
+
+PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries)
+  logBegin(string("RdDataIN"))
+  result := logStatus(\hc.ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries))
+  hexDump(buffer, result)
+
+PUB SendToken(pid, token, delayAfter)
+  logBegin(string("SndToken"))
+  term.hex(token, 4)
+  logComma
+  term.hex(delayAfter, 2)
+  result := logStatus(\hc.SendToken(pid, token, delayAfter))
+
+
 PUB DeviceDescriptor
   return hc.DeviceDescriptor
 PUB ConfigDescriptor
@@ -243,8 +269,25 @@ PUB GetPortConnection
   return hc.GetPortConnection
 PUB DefaultMaxPacketSize0
   return hc.DefaultMaxPacketSize0
+PUB Sync
+  return hc.Sync
+PUB SetupBuffer
+  return hc.SetupBuffer
 PUB LastPIDError
   return hc.LastPIDError
+PUB Command(cmd, arg)
+  logBegin(string("DevReset"))
+  return hc.Command(cmd, arg)
+PUB CommandResult
+  return hc.CommandResult
+PUB CommandExtra(arg)
+  return hc.CommandExtra(arg)
+PUB EndpointTableAddr(epd)
+  return hc.EndpointTableAddr(epd)
+PUB EndpointMaxPacketSize(epd)
+  return hc.EndpointMaxPacketSize(epd)
+PUB ResetEndpointToggle
+  return hc.ResetEndpointToggle
 
 
 PRI hexDump(buffer, bytes) | addr, x, b, lastCol
