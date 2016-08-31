@@ -194,7 +194,7 @@ CON
   ' Note that if TX_BUFFER_WORDS is too large the error is detected at compile-time, but
   ' if RX_BUFFER_WORDS is too large we won't detect the error until Start is running!
 
-  TX_BUFFER_WORDS = 210
+  TX_BUFFER_WORDS = 205
   RX_BUFFER_WORDS = 256
 
   ' Maximum stored configuration descriptor size, in bytes. If the configuration
@@ -261,7 +261,7 @@ CON
   OP_NOP           = 0                 ' Do nothing
   OP_RESET         = 1                 ' Send a USB Reset signal   '
   OP_TX_BEGIN      = 2                 ' Start a TX packet. Includes 8-bit PID
-  OP_TX_END        = 3                 ' End a TX packet
+  OP_TX_END        = 3                 ' End a TX packet, arg = # of extra idle bits after
   OP_TXRX          = 4                 ' Transmit and/or receive packets
   OP_TX_DATA_16    = 5                 ' Encode and store a 16-bit word
   OP_TX_DATA_PTR   = 6                 ' Encode data from hub memory.
@@ -612,13 +612,7 @@ PUB Enumerate | pc
   ' Device reset, and give it some time to wake up
   DeviceReset
   FrameWait(10)
-
-  ' Before we can do any transfers longer than 8 bytes, we need to know the maximum
-  ' packet size on EP0. Otherwise we won't be able to determine when a transfer has
-  ' ended. So, we'll use a temporary maximum packet size of 8 in order to address the
-  ' device and to receive the first 8 bytes of the device descriptor. This should
-  ' always be possible using transfers of no more than one packet in length.
-  BYTE[buf_dd + DEVDESC_bMaxPacketSize0] := 8
+  DefaultMaxPacketSize0
 
   if 0 > \DeviceAddress
     abort E_DEV_ADDRESS
@@ -636,6 +630,18 @@ PUB Enumerate | pc
     abort E_READ_DD_2
 
   ReadConfiguration(0)
+
+
+PUB DefaultMaxPacketSize0
+
+  ' Before we can do any transfers longer than 8 bytes, we need to know the maximum
+  ' packet size on EP0. Otherwise we won't be able to determine when a transfer has
+  ' ended. So, we'll use a temporary maximum packet size of 8 in order to address the
+  ' device and to receive the first 8 bytes of the device descriptor. This should
+  ' always be possible using transfers of no more than one packet in length.
+
+  BYTE[buf_dd + DEVDESC_bMaxPacketSize0] := 8
+
 
 PUB Configure
   '' Switch device configurations. This (re)configures the device according to
@@ -858,13 +864,17 @@ PUB ControlWrite(req, value, index, bufferPtr, length) | toggle, pktSize0, packe
       toggle := PID_DATA1
       return DataIN(TOKEN_DEV1_EP0, @packetSize, 4, pktSize0, @toggle, TXRX_TX_RX_ACK, MAX_TOKEN_RETRIES, 1)
 
-PRI ControlRaw(token, buffer, length) | toggle
+PUB ControlRaw(token, buffer, length) | toggle
 
-  ' Common low-level implementation of no-data and read control transfers.
+  '' Common low-level implementation of no-data and read control transfers.
 
   toggle := PID_DATA0
   WriteData(PID_SETUP, token, buf_setup, 8, @toggle, MAX_TOKEN_RETRIES)
   return DataIN(token, buffer, length, BYTE[buf_dd + DEVDESC_bMaxPacketSize0], @toggle, TXRX_TX_RX_ACK, MAX_TOKEN_RETRIES, 1)
+
+PUB SetupBuffer
+  return buf_setup
+
 
 DAT
 ''
@@ -1008,7 +1018,7 @@ PUB WriteData(pid, token, buffer, length, togglePtr, retries)
       Command(OP_TX_DATA_PTR, buffer)
 
     Command(OP_TX_CRC16, 0)
-    Command(OP_TX_END, 0)
+    Command(OP_TX_END, 4)
     Command(OP_TXRX, TXRX_TX_RX)
 
     Command(OP_RX_PID, 0)
@@ -1178,7 +1188,7 @@ PUB SendToken(pid, token)
 
   Command(OP_TX_BEGIN, pid)
   Command(OP_TX_DATA_16, token)
-  Command(OP_TX_END, 0)
+  Command(OP_TX_END, 10)
 
 
 DAT
@@ -1382,8 +1392,12 @@ cmd_tx_begin
 
 cmd_tx_end
               call      #encode_eop
-
-              jmp       #cmdret
+:idle_loop    
+              test      l_cmd, #$1FF wz
+        if_z  jmp       #cmdret
+              call      #encode_idle
+              sub       l_cmd, #1
+              jmp       #:idle_loop
 
               '======================================================
               ' OP_TX_DATA_16
