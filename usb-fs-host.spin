@@ -935,17 +935,17 @@ DAT
 ' Low-level Transfer Utilities
 '==============================================================================
 
-PRI EndpointTableAddr(epd) : addr
+PUB EndpointTableAddr(epd) : addr
   ' Given an endpoint descriptor, return the address of our EndpointTable entry.
 
   return @EndpointTable + ((BYTE[epd + EPDESC_bEndpointAddress] & $F) << EPTABLE_SHIFT)
 
-PRI EndpointMaxPacketSize(epd) : maxPacketSize
+PUB EndpointMaxPacketSize(epd) : maxPacketSize
   ' Parse the max packet size out of an endpoint descriptor
 
   return UWORD(epd + EPDESC_wMaxPacketSize)
 
-PRI ResetEndpointToggle | ep
+PUB ResetEndpointToggle | ep
   ' Reset all endpoints to the default DATA0 toggle
 
   ep := @EndpointTable
@@ -953,7 +953,7 @@ PRI ResetEndpointToggle | ep
     BYTE[ep + EPTABLE_TOGGLE_IN] := BYTE[ep + EPTABLE_TOGGLE_OUT] := PID_DATA0
     ep += constant(|< EPTABLE_SHIFT)
 
-PRI DataIN(token, buffer, length, maxPacketLen, togglePtr, txrxFlag, tokenRetries, crcRetries) : actual | packetLen
+PUB DataIN(token, buffer, length, maxPacketLen, togglePtr, txrxFlag, tokenRetries, crcRetries) : actual | packetLen
 
   ' Issue IN tokens and read the resulting data packets until
   ' a packet smaller than maxPacketLen arrives. On success,
@@ -986,7 +986,7 @@ PRI DataIN(token, buffer, length, maxPacketLen, togglePtr, txrxFlag, tokenRetrie
     if length =< 0
       return  ' Transfer fully completed
 
-PRI WriteData(pid, token, buffer, length, togglePtr, retries)
+PUB WriteData(pid, token, buffer, length, togglePtr, retries)
 
   ' Transmit a single data packet to an endpoint, as a token followed by DATA.
   '
@@ -1031,7 +1031,7 @@ PRI WriteData(pid, token, buffer, length, togglePtr, retries)
       other:
         abort E_PID
 
-PRI RequestDataIN(token, txrxFlag, togglePtr, retries)
+PUB RequestDataIN(token, txrxFlag, togglePtr, retries)
 
   ' Low-level data IN request. Handles data toggle and retry.
   ' This is part of the implementation of DataIN().
@@ -1068,7 +1068,7 @@ PRI RequestDataIN(token, txrxFlag, togglePtr, retries)
       other:
         abort E_PID
 
-PRI ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries)
+PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries)
 
   ' Low-level data IN request + read to buffer.
   ' This is part of the implementation of DataIN().
@@ -1173,7 +1173,7 @@ PRI ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
   ' Out of CRC retries
   abort
 
-PRI SendToken(pid, token)
+PUB SendToken(pid, token)
   ' Enqueue a token in the TX buffer
 
   Command(OP_TX_BEGIN, pid)
@@ -1187,11 +1187,11 @@ DAT
 ' Low-level Command Interface
 '==============================================================================
 
-PRI Sync
+PUB Sync
   ' Wait for the driver cog to finish what it was doing.
   repeat while txc_command
 
-PRI Command(cmd, arg) | packed
+PUB Command(cmd, arg) | packed
   ' Asynchronously execute a low-level driver cog command.
   ' To save space in the driver cog, the conversion from
   ' command ID to address happens here, and we pack the
