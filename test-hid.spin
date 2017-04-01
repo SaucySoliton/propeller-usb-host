@@ -1,5 +1,4 @@
-' Quick HID device test. (Note that this is only for full-speed HID devices.
-' Many HID devices are low-speed only.)
+' Quick HID device test. 
 
 CON
   _clkmode = xtal1 + pll16x

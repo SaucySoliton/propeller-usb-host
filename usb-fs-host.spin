@@ -223,7 +223,7 @@ Public functions are provided for each supported transfer type.
 endpoint descriptor, hub memory buffer, and buffer size.
 
 All transfers are synchronous. (So, during a transfer itself,
-we're really tying up 5 cogs if you count the one you called from.)
+we're really tying up 3 cogs if you count the one you called from.)
 All transfers and most other functions can 'abort' with an error code.
 See the E_* constants below. You must use the '\' prefix on function
 calls if you want to catch these errors.
@@ -267,8 +267,8 @@ CON
   ' Note that if TX_BUFFER_WORDS is too large the error is detected at compile-time, but
   ' if RX_BUFFER_WORDS is too large we won't detect the error until Start is running!
 
-  TX_BUFFER_WORDS = 200
-  RX_BUFFER_WORDS = 256
+  TX_BUFFER_WORDS = 185 ' FIXME is this right?
+  RX_BUFFER_WORDS = 266
 
   ' Maximum stored configuration descriptor size, in bytes. If the configuration
   ' descriptor is longer than this, we'll truncate it. Must be a multiple of 4.
@@ -277,7 +277,7 @@ CON
 
   ' USB data pins.
   '
-  ' Important: Both DMINUS and DPLUS must be <= 8, since we
+  ' Important: Both DMINUS and DPLUS must be <= 7, since we
   '            use pin masks in instruction literals, and we
   '            assume we're using the first video generator bank.
 
@@ -565,7 +565,7 @@ DAT
 
 txc_command   long      -1                      ' Command buffer: [23:16]=arg, [15:0]=code ptr
 rx1_time      long      -1                      ' Trigger time for RX1 cog
-rx2_time      long      -1                      ' Trigger time for RX2 cog
+'rx2_time      long      -1                      ' Trigger time for RX2 cog
 rx2_sop       long      -1                      ' Start of packet, calculated by RX2
 txc_result    long      0
 
@@ -607,7 +607,7 @@ PUB Start
 
   ' Set up pre-cognew parameters
   sof_deadline := cnt
-  txp_portc    := @portc
+  rx1p_portc := txp_portc    := @portc
   txp_result   := @txc_result
   txp_rx1_time := @rx1_time
 '  txp_rx2_time := @rx2_time
@@ -687,8 +687,8 @@ PUB Enumerate | pc
   case pc
     PORTC_NO_DEVICE, PORTC_INVALID:
       abort E_NO_DEVICE
-    PORTC_LOW_SPEED:
-      abort E_LOW_SPEED
+    'PORTC_LOW_SPEED:
+    '  abort E_LOW_SPEED
 
   ' Device reset, and give it some time to wake up
   DeviceReset
@@ -947,7 +947,7 @@ PUB ControlWrite(req, value, index, bufferPtr, length) | toggle, pktSize0, packe
 
 PUB ControlRaw(token, buffer, length) | toggle
 
-  '' Common low-level implementation of no-data and read control transfers.
+  ' Common low-level implementation of no-data and read control transfers.
 
   toggle := PID_DATA0
   WriteData(PID_SETUP, token, buf_setup, 8, @toggle, MAX_TOKEN_RETRIES)
@@ -1161,7 +1161,7 @@ PUB RequestDataIN(token, txrxFlag, togglePtr, retries)
         last_pid_err := txc_result
         abort E_PID
 
-PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries)
+PRI ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetries) | pc
 
   ' Low-level data IN request + read to buffer.
   ' This is part of the implementation of DataIN().
@@ -1230,8 +1230,11 @@ PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
     ' new offset for 80MHz clock   6 2/3 clocks per bit
     '    offset = (headerBits + crcBits + roundingBits) * (20/3) - 4 = 236
 
-
-    result := ((RequestDataIN(token, txrxFlag, togglePtr, tokenRetries) - rx2_sop - 236)*3)/20
+    pc := GetPortConnection
+    if pc == PORTC_LOW_SPEED
+        result := ((RequestDataIN(token, txrxFlag, togglePtr, tokenRetries) - rx2_sop - 1916)*3)/20/8
+    else
+        result := ((RequestDataIN(token, txrxFlag, togglePtr, tokenRetries) - rx2_sop - 236)*3)/20
 
     if result =< 0
       result~ ' Zero-length packet. Device ended the transfer early
@@ -1447,19 +1450,51 @@ tx_sof
               mov       t1, ina
               and       t1, #BUS_MASK
               wrbyte    t1, txp_portc                 ' Save idle bus state as PORTC
-              cmp       t1, #PORTC_FULL_SPEED wz
-        if_nz jmp       #:skip                        ' Only send SOF to full-speed devices
+              cmp       t1, #PORTC_FULL_SPEED wz      ' Z if full speed
+        if_z  jmp       #:sof_full
+
+              mov       v_palette,v_palette_low       ' switch the tx speed while time is not critical
+              mov       vscl_value,vscl_low           '
+              cmp       t1, #PORTC_LOW_SPEED wz       ' Z if low speed
+       if_nz  jmp       #:skip                        ' skip if not low speed
+              jmp       #:sof_low
+
+:sof_full
+              mov       v_palette,v_palette_full      ' switch the tx speed while time is not critical
+              mov       vscl_value,vscl_full          '
 
               call      #encode_sync                  ' SYNC field
 
               mov       codec_buf, sof_frame          ' PID and Token
               mov       codec_cnt, #24
               call      #encode
+:sof_low
 
               call      #encode_eop                   ' End of packet and inter-packet delay
+              call      #encode_idle ' this added to FS too!
 
               mov       l_cmd, #0                     ' TX only, no receive
               call      #txrx
+              jmp       #:skip
+
+              ' LOW speed uses keep-alive pulses instead of SOF
+':keepalive
+'              cmp       t1, #PORTC_LOW_SPEED wz
+'        if_nz jmp       #:skip                        ' Only send keepalive to low-speed devices
+
+'              mov       t1,#100     ' delay
+'              djnz      t1,#$                         '
+
+'              mov       t1,#25     ' 4*N + 8 clocks = 2 bit times (N=25)
+'              andn      outa, #BUS_MASK
+'              or        dira, #BUS_MASK               ' Send keep-alive
+'              djnz      t1,#$                         '
+'              or        outa, #PORTC_LOW_SPEED        ' Drive idle
+'              mov       t1,#25     ' 4*N + 8 clocks = 2 bit times (N=25)
+'              djnz      t1,#$                         '
+'              andn      dira, #BUS_MASK               ' release bus
+'              andn      outa, #BUS_MASK
+'              call      #enc_reset                    ' May not be needed, but txrx does it
 
 :skip
               add       sof_deadline, sof_period
@@ -1690,7 +1725,7 @@ txrx
               ' This is great because we don't have to calculate the wakup time
               ' and we save power by using waitpeq instead of looping.
               or        dira, tx_ncmask        ' Maybe put this somewhere else
-              or        outa, tx_ncmask        ' Get ready for falling edge later
+       if_c   or        outa, tx_ncmask        ' Get ready for falling edge later
 
               ' Right now tx_count_raw is the number of bits
               ' in the packet. Convert it to a loop count we can
@@ -1707,7 +1742,9 @@ txrx
               add       tx_count_raw,t1         ' 1/2
               shr       t1, #1                  '
               add       tx_count_raw,t1         ' 1/4
-
+              cmp       vscl_value,vscl_low wz
+        if_z  shl       tx_count_raw,#3         ' low speed 8 times slower
+        if_z  add       tx_count_raw,#20
               ' Transmitter startup: We need to synchronize with the video PLL,
               ' and transition from an undriven idle state to a driven idle state.
               ' To do this, we need to fill up the video generator register with
@@ -1763,6 +1800,7 @@ txrx
 :tx_inst3     waitvid   v_palette, 0            ' tx_count_raw == 0
               andn      dira, #DEBUG_TX_MASK | BUS_MASK
 
+
 :tx_release_done
 
               ' As soon as we're done transmitting, switch to a 'turbo' vscl value,
@@ -1788,6 +1826,10 @@ txrx
 :wait_eop     test      c_bus_mask, ina wz
         if_nz djnz      t1, #:wait_eop
               mov       t3, cnt                         ' EOP timestamp
+
+              mov       t1,#20
+              cmp       vscl_value,vscl_low wz
+        if_z  djnz      t1,#$         ' low speed delay
 
               ' The USB spec gives us a fairly narrow window in which to transmit the ACK.
               ' So, to get predictable latency while also keeping code size down, we
@@ -1816,7 +1858,9 @@ txrx
               ' periods (2 full iterations) to do this job. That's 512
               ' clock cycles, or 32 hub windows.
 
-              mov       t1, #32
+              mov       t1, #1
+              shl       t1,#12
+              'mov       t1,#32
 :rx_wait      rdbyte    t3, txp_rxdone wz
         if_nz djnz      t1, #:rx_wait
 
@@ -2107,6 +2151,12 @@ vcfg_value    long      (%011 << 28)                    ' Unpack 2-bit -> 8-bit
 vscl_value    long      (8 << 12) | (8 * 16)            ' Normal 8 clocks per pixel, 16 bits/frame
 vscl_turbo    long      (1 << 12) | (1 * 16)            ' 1 clock per pixel, 2 bit times/frame
 v_palette     long      (BUS_MASK << 24) | (STATE_J << 16) | (STATE_K) << 8
+
+vscl_low      long      ((8*8) << 12) | ((8*8) * 16)
+vscl_full     long      (8 << 12) | (8 * 16)
+v_palette_low  long      (BUS_MASK << 24) | (STATE_J << 8) | (STATE_K) << 16 ' Swap D+, D-
+v_palette_full long      (BUS_MASK << 24) | (STATE_J << 16) | (STATE_K) << 8
+
 v_idle        long      %%2222_2222_2222_2222
 tx_ncmask     long      |<USBNC
 ' Pre-encoded ACK sequence:
@@ -2150,7 +2200,7 @@ crc16_mask    long      $ffff                           ' Init/final mask
 ' and the EOP on the received packet. So it must account for the max size of the
 ' receive buffer, plus an estimate of the max inter-packet delay.
 
-eopwait_iters long      ((RX_BUFFER_WORDS * 32) + 128)
+eopwait_iters long      ((RX_BUFFER_WORDS * 32) + 128 + 2000)
 
 ' We try to send SOFs every millisecond, but other traffic can preempt them.
 ' Since we're not even trying to support very timing-sensitive devices, we
@@ -2222,17 +2272,15 @@ rx_cog_1
 
 :restart
               ' Initial conditions for counters
-              mov frqb , #0       ' PHSB is set later
-              mov ctrb, ctr_data  ' accumulate when sampling pulse and data
+              mov frqb , #0            ' PHSB is set later
+              mov ctrb, ctr_data_fs    ' accumulate when sampling pulse and data
 
+              ' Initialize CTRA. We must keep the USBNC pin low now,
+              ' or we will miss our wakeup signal from the TX cog.
               mov frqa , #0
               mov phsa, phs_usb
-              mov ctra, ctr_usb   ' duty output on NC pin
-              ' We need to ensure that we output
-              ' low to the NC pin or this will prevent
-              ' us from receiving wakeup pulses from
-              ' the TX cog.
-              mov dira, rx1_nc
+              mov ctra, ctr_usb        ' duty output on USBNC pin
+              mov dira, rx1_dira
 
 
               ' FIXME We count by longs, not bytes.
@@ -2257,13 +2305,16 @@ rx_cog_1
               mov oldphs,#0
               mov dptr, #databuf
 
+              ' A rising edge from the TX cog is our wakeup signal.
+              waitpeq rx1_nc,rx1_nc
+
+              ' Check what speed we need to receive.
+              rdbyte  t2,rx1p_portc
+              test    t2,rx1_dplus wz
+      if_z    jmp     #:start_ls
 
 
-              ' The TX cog lowers our clock pin before sending the last word.
-              ' We then wait for the SE0 end of packet signal and activate the
-              ' receiver.
-
-              waitpeq rx1_nc,rx1_nc ' trigger on falling edge
+:rx1_start_fs
               waitpne rx1_nc,rx1_nc ' trigger on falling edge
 
               ' Now synchronize to the beginning of the next packet.
@@ -2278,28 +2329,28 @@ rx_cog_1
 
               ' The TX cog triggers us a little early
               ' so we wait for SE0 before activating the receiver.
-              waitpeq   rx1_zero, #3  ' wait for EOP
+              waitpeq   rx1_zero, rx1_dmask   ' wait for EOP
 
               ' We should have time to do this here since USB spec
               ' require minimum of 2 bit times before next packet.
               mov frqb , #1 '0    ' get timer ready to receive data
 
-              waitpne   rx1_zero, rx1_dminus   ' sync to rising edge
-        mov frqa, frq_usb   ' turn on sampling clock
-                        mov rx1_cnt, cnt       ' save SOP time
+              waitpne   rx1_zero, rx1_dminus    ' sync to rising edge (K)
+        mov frqa, frq_usb                       ' turn on sampling clock
+                        mov rx1_cnt, cnt        ' save SOP time
         shl frqb,#1 '1
-                        sub rx1_cnt, #4        ' adjust SOP timestamp
+                        sub rx1_cnt, #4         ' adjust SOP timestamp
 :sample_loop
         shl frqb,#1 '2
 ' quantum break
         shl frqb,#1 '3
-                        mov newraw, newphs     ' set up to subtract
+                        mov newraw, newphs      ' set up to subtract
         shl frqb,#1 '4
-                        sub newraw, oldphs wz  ' extract new data, detect pEOP
+                        sub newraw, oldphs wz   ' extract new data, detect pEOP
         shl frqb,#1 '5
 ' quantum break
         shl frqb,#1 '6
-                        if_z jmp #:rx_done   ' exit quickly on pEOP
+                        if_z jmp #:rx_done      ' exit quickly on pEOP
         shl frqb,#1 '7
                         movd :wr, dptr
         shl frqb,#1 '8
@@ -2307,25 +2358,25 @@ rx_cog_1
         shl frqb,#1 '9
                         add dptr, #1
         shl frqb,#1 '10
-                        mov datalong, newraw ' start of nrzi decoder
+                        mov datalong, newraw    ' start of nrzi decoder
         shl frqb,#1 '11
 ' quantum break
         shl frqb,#1 '12
-                        shr oldraw, #29      ' get last bit of old data
+                        shr oldraw, #29         ' get last bit of old data
         shl frqb,#1 '13
-                        and oldraw, #1       ' destructively
+                        and oldraw, #1          ' destructively
         shl frqb,#1 '14
 ' quantum break
         shl frqb,#1 '15
-                        shl datalong, #1     ' make room for last bit
+                        shl datalong, #1        ' make room for last bit
         shl frqb,#1 '16
-                        add datalong, oldraw ' add the last bit on
+                        add datalong, oldraw    ' add the last bit on
         shl frqb,#1 '17
 ' quantum break
         shl frqb,#1 '18
-                        xor datalong, newraw   ' find transitions
+                        xor datalong, newraw    ' find transitions
         shl frqb,#1 '19
-                        xor datalong,data_mask ' invert
+                        xor datalong,data_mask  ' invert
         shl frqb,#1 '20
 ' quantum break
         shl frqb,#1 '21
@@ -2337,19 +2388,19 @@ rx_cog_1
         shl frqb,#1 '24
                         nop
         shl frqb,#1 '25
-:wr                     mov 0, datalong ' store data
+:wr                     mov 0, datalong         ' store data
         shl frqb,#1 '26
 ' quantum break
         shl frqb,#1 '27
                         mov oldraw,newraw
         shl frqb,#1 '28
-                        mov oldphs,newphs
+                        mov oldphs,newphs    '
         shl frqb,#1 '29
 ' quantum break
         mov frqb,#1 '0
                         mov newphs,phsb ' read data, bit 0 not yet included
         shl frqb,#1 '1
-                        djnz rx1_iters,#:sample_loop
+                        djnz rx1_iters,#:sample_loop '
       ' shl frqb,#1 '2  after jump
 
               ' We don't have time to read and clear phsb without
@@ -2366,9 +2417,141 @@ rx_cog_1
 ' databuf[1] contains first real data, [31:30] undefined, [29:0] NRZI decoded
 ' databuf[n] is written with 0 on pEOP
 
+              jmp #:upload
+
+:start_ls
+
+                 movd      :lswr, #databuf      ' reset data pointer
+                 mov  bitpos,rx1_dplus          ' initial state for waitpxx
+                 or   bitpos,rx1_nc
 
 
-              ' Data received, now copy the data to hub ram.
+                 waitpne rx1_nc,rx1_nc ' trigger on falling edge`
+
+
+
+                 waitpeq   rx1_zero, rx1_dmask  ' wait for EOP
+
+                 mov frqa , #1       ' watchdog timer on
+                 mov phsa, phs_wdt
+                 mov ctra, ctr_wdt   ' NCO output on NC pin
+
+                 waitpne  rx1_zero,rx1_dplus    ' wait for SOP (K)
+
+                 ' alternate SOP detector with timeout
+                 ' mov       loopcnt,#1 ' eopwait_iters
+                 ' shl       loopcnt,#20
+' :wait_sop        test      mask, ina wz         ' Wait for a one on
+'        if_z     djnz      loopcnt, #:wait_sop  ' D+
+
+                 mov       rx1_cnt, cnt         ' save SOP
+                 mov       oldphs,rx1_cnt       ' also use it as first edge
+
+                 ' We use the Z flag and C flag parity calculation to
+                 ' detect EOP and timeout in the same test.
+                 '
+                 ' If we receive a SE1 at the exact same time
+                 ' as the timer runs out, we will miss it. (Unlikely)
+                 '
+                 '  NC       USB      Z      C
+                 ' ---------------------------------
+                 '   1       SE0      0      1    Exit due to SE0
+                 '   1        D+      0      0    Normal receving case
+                 '   1        D-      0      0    Normal receving case
+                 '   1       SE1      0      1    Exit due to SE1
+                 '   0       SE0      1      0    Exit due to timeout and SE0
+                 '   0        D+      0      1    Exit due to timeout
+                 '   0        D-      0      1    Exit due to timeout
+                 '   0       SE1      0      0    Fail to exit !!!
+
+                 ' We need waitpxx to continue on SE0
+                 ' in order to detect SE0 after J.
+:ls_loop
+                 waitpne   bitpos,rx1_wmask     ' 1
+                 mov       newphs,cnt           ' 2
+                 xor       bitpos,rx1_dmask     ' 3 swap polarity for next edge
+                 mov       newraw,newphs        ' 4
+                 test      rx1_wmask,ina  wc,wz ' 5
+                 sub       newraw,oldphs        ' 6
+:lswr            mov       0, newraw            ' 7 store data
+  if_c_or_z      jmp       #:ls_eop             ' 8
+                 add       :lswr,d_by_one       ' 9
+                 mov       oldphs,newphs        '10
+                 djnz      rx1_iters,#:ls_loop  '11
+
+:ls_eop
+                 ' If we needed the EOP timestamp we could get it from newphs.
+
+                 ' Retrieve the current dptr from our write instruction
+                 mov     dptr,:lswr             '
+                 shr     dptr,#9                '
+                 and     dptr,#$1FF             '
+
+                 mov frqa, #0                   ' Stop counter
+                 mov phsa, #0                   ' Set the counter output pin to low
+                 mov ctra, ctr_usb              ' ctr_hub, for upload (same as ctr_usb)
+
+
+                 ' The output of the low speed receiver needs some post-processing.
+                 ' In the future we could do unstuffing here.
+
+                 ' oldphs = input  clocks between edges
+                 ' newphs = used to count how many bits to output for each edge
+                 ' newraw = output data buffer
+                 ' ocnt   = output bits remaining in long
+
+                 mov loopcnt,dptr                 ' calculate how many
+                 sub loopcnt,#databuf             ' longs we received
+                 add loopcnt,#2                   ' index adjustment   Don't fully understand yet
+
+                 movs      :lsread,#(databuf+0)   ' reset read address
+                 mov       dptr,#(databuf+1)      ' reset write address
+                 cmp       rx1_zero,#$1FF   wc    ' set carry
+                 jmp       #:lsinit               ' rest of init in loop
+
+
+:lsread          mov       newphs, databuf+1      ' read new data
+                 add       :lsread, #1            ' S++
+                 sub       loopcnt,#1   wz        ' limit input length
+           if_z  jmp       #:lsrx_done
+
+
+              ' 53 1/3 clocks per bit nominal at 80 MHz
+              ' Using 53 shifts the thresholds a little
+              ' off center, but we should still be able
+              ' to tolerate 5% clock error with 7 consecutive ones.
+              ' USB spec is 1.5% for low speed devices.
+
+              sub       newphs,#26   wc
+     '   if_c  jmp       #:lsread             ' optional noise/error catch
+
+              cmp       newphs,#450  wc       ' Limit the number of bits in each run
+        if_nc jmp       #:lsrx_done           ' to avoid overflow. This would be a
+                                              ' bit stuffing error or other fault.
+
+:lswloop      sub       newphs,#53   wc        ' C=1 for last bit of the loop.
+        if_nc or        newraw, bitpos         ' That means write a zero.
+              ' Future: skip the next 2 lines for stuffed bits
+              shl       bitpos,#1
+              sub       lsrx_ocnt, #1 wz       ' count bits remaining
+        if_nz jmp       #:samelong
+:lswrite      mov       0, newraw
+              add       dptr, #1               ' increment address
+:lsinit       movd      :lswrite, dptr         '
+              mov       lsrx_ocnt, #30         '
+              mov       bitpos, #1             ' reset output shift reg
+              mov       newraw,#0              '
+:samelong
+        if_nc jmp       #:lswloop
+              jmp       #:lsread
+
+:lsrx_done    movd      :lswrite2, dptr        '
+              nop
+:lswrite2     mov       0, newraw
+
+
+
+:upload       ' Data received, now copy the data to hub ram.
               '
               mov loopcnt,dptr          ' calculate how many
               sub loopcnt,#databuf      ' longs we received
@@ -2376,7 +2559,6 @@ rx_cog_1
 
               movd :hublp,#databuf      ' set cog start address
               add :hublp, d_by_one      ' skip dummy long at start
-
               mov ctrb, ctr_clock       ' accumulate with sampling pulse only
 
               ' save the SOP timestamp  and synchronize with hub
@@ -2399,23 +2581,29 @@ rx_cog_1
               mov frqb, #0 ' stop accumulator
 
         ' Debug code for quickstart LEDs
-    '  mov cnttmp,databuf+1
+'       mov cnttmp,databuf+1
+   '    mov cnttmp,t2
 '      mov t2, rx1p_buffer
-'      add t2,#0
+'      add t2,#4
 '      rdlong cnttmp,t2
    '   mov cnttmp,phsb
- '     shr cnttmp,#7
-  '    and cnttmp,#$ff
-   '   shl cnttmp,#16
-'      mov outa,cnttmp
+'      shr cnttmp,#7
+'       and cnttmp,#$ff
+'       shl cnttmp,#16
+'       mov outa,cnttmp
 
 
               jmp       #:restart
-
+rx1_wmask     long      (1<<DPLUS) + (1<<DMINUS) + (1<<USBNC)
+rx1_dmask     long      (1<<DPLUS) + (1<<DMINUS)
+rx1_dplus     long      |< DPLUS
 rx1_dminus    long      |< DMINUS
 rx1_zero      long      0
 rx1_nc        long      |< USBNC
+rx1_dira      long      (1<<USBNC) + ($ff<<16) '+ (1<<7)
 
+ctr_wdt       long      (%00100_000 << 23) + (USBNC) 'nco out
+phs_wdt       long      -(53*130)    ' 130 bits is max LS packet + gap
 
 ctr_usb       long      (%00110_000 << 23) + (USBNC) 'duty out
 ' Adjusting the starting phase may require the
@@ -2430,17 +2618,17 @@ phs_hub       long      $8000_0000    ' Not sure if this is critical
 frq_hub       long      $1000_0000    ' 1/16 clock rate
 ' ctr_data  is used to sample USB data
 ' ctr_clock is used to increment hub address
-ctr_data      long      (%11000_000 << 23) + (USBNC) + (DMINUS<<9)
+ctr_data_fs   long      (%11000_000 << 23) + (USBNC) + (DMINUS<<9)
 ctr_clock     long      (%11010_000 << 23) + (USBNC)
 
 d_by_one      long      (1<<9)
 data_mask     long      $3FFF_FFFF  ' bits 29-0
 d_first       long      (1<<29)     ' initial condition for NRZI decoder
-
 ' Parameters that are set up by Spin code prior to cognew()
 rx1p_done     long      0
 rx1p_buffer   long      0
 rx1p_sop      long      0
+rx1p_portc    long      0            ' we check this for speed data
 
 'rx1_buffer    res       1           ' we store this in phsb now
 rx1_cnt       res       1            ' stores SOP timestamp
@@ -2449,13 +2637,22 @@ t2            res       1
 loopcnt       res       1
 newphs        res       1
 oldphs        res       1
-
+'lsrx_icnt     res       1
+lsrx_ocnt     res       1
 dptr          res       1
 newraw        res       1
 oldraw        res       1
 datalong      res       1
 cnttmp        res       1
-databuf       res     270
+'lsrx_cnt      res       1
+'iloop         res       1
+'oloop         res       1
+'sample0       res       1
+'sample1       res       1
+'sample2       res       1
+bitpos        res       1
+'lrx_shift     res       1
+databuf       res     240
 
               fit
 
