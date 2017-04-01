@@ -2,7 +2,7 @@
 
 CON
   _clkmode = xtal1 + pll16x
-  _xinfreq = 6_000_000
+  _xinfreq = 5_000_000
 
   ' Which LBA do we clobber with our test?
   TEST_LBA = (8 * 1024 * 1024) / 512

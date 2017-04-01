@@ -18,7 +18,7 @@ obj
 
 CON
   _clkmode = xtal1 + pll16x
-  _xinfreq = 6_000_000
+  _xinfreq = 5_000_000
 
    offset = 8 * 2048 ' the block offset of where we do writes
 var

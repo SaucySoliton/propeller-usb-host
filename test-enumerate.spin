@@ -1,6 +1,6 @@
-CON
+ CON
   _clkmode = xtal1 + pll16x
-  _xinfreq = 6_000_000
+  _xinfreq = 5_000_000
 
 OBJ
   hc : "usb-fs-host"

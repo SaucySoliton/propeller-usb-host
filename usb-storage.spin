@@ -348,7 +348,7 @@ PUB SCSI_Command(buffer, dataLen, flags, timeoutMS) | deadline
   '' Returns the "residue" (the difference between the requested transfer
   '' length and the actual length.)
 
-  deadline := cnt + 96_000 * timeoutMS
+  deadline := cnt + 80_000 * timeoutMS
   cbw_transferLength := dataLen
   cbw_flags := flags
 

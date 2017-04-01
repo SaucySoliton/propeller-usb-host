@@ -88,13 +88,13 @@ PUB logTimestamp | now
 
   ' To avoid rollover, eat full seconds by incrementing epochSec and moving epoch forward.
   now := cnt
-  repeat while ((now - epoch) => 96_000_000) or ((now - epoch) < 0)
-    epoch += 96_000_000
+  repeat while ((now - epoch) => 80_000_000) or ((now - epoch) < 0)
+    epoch += 80_000_000
     epochSec++
 
   term.dec(epochSec)
   term.char(".")
-  dec3((now - epoch) / 96_000)
+  dec3((now - epoch) / 80_000)
 
 PUB dec3(n)
   ' 3-digit unsigned decimal number, with leading zeroes

@@ -4,13 +4,12 @@
 
   USB Bluetooth module attached on P0-P1,
   Television output starting at P12.
-  Requires a 6 MHz crystal.
 
 }}
 
 CON
   _clkmode = xtal1 + pll16x
-  _xinfreq = 6_000_000
+  _xinfreq = 5_000_000
   
 OBJ
   spp : "bluetooth-serial"

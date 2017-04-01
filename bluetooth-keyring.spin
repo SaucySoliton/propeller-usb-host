@@ -192,7 +192,7 @@ PRI Commit(address) | shiftreg, bytecount
   ' Wait for page write. Datasheet says the max write time is 5ms.
   ' This is just a really conservative hardcoded delay. It's 5ms at 96 MHz.
   ' (This takes less memory than polling for completion.)
-  waitcnt(cnt + constant(96_000_000 / 1000 * 5))
+  waitcnt(cnt + constant(80_000_000 / 1000 * 5))
 
 DAT
 {{

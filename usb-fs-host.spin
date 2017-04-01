@@ -11,7 +11,7 @@ controller driver, host controller, and a bit-banging PHY layer.
 
 Software implementations of low-speed (1.5 Mb/s) USB have become
 fairly common, but full-speed pushes the limits of even a fairly
-powerful microcontroller like the Propeller. So naturally, I
+powerful microcontroller like the Propeller. So naturally, we
 had to cut some corners. See the sizable list of limitations and
 caveats below.
 
@@ -25,9 +25,10 @@ See end of file for terms of use.
 Hardware Requirements
 ---------------------
 
- - 96 MHz (overclocked) Propeller
+ - 80 MHz Propeller
  - USB D- attached to P0 with a 47 ohm series resistor
  - USB D+ attached to P1 with a 47 ohm series resistor
+ - A spare IO pin to leave unconnected
  - Pull-down resistors (~47k ohm) from USB D- and D+ to ground
 
   +-------------------+  USB Host (Type A) Socket
@@ -47,6 +48,8 @@ Hardware Requirements
       2x 47k  / / |
               | | |
               - - -
+
+  P8 >---  no connection, or watch with oscilloscope :)
 
   Note: For maximum compatibility and at least some semblance of
         USB spec compliance, all four of these resistors are
@@ -71,21 +74,20 @@ Limitations and Caveats
    (One host controller, one port, no hubs.)
 
  - Pin numbers are currently hardcoded as P0 and P1.
-   Clock speed is hardcoded as 96 MHz (overclocked)
+   Clock speed is hardcoded as 80 MHz
 
- - Requires 3 cogs.
+ - Requires 2 cogs.
 
-   (We need a peak of 3 cogs during receive, but two
-   of them are idle at other times. There is certainly
-   room for improvement...)
+   (We need a peak of 2 cogs during receive, but one
+   of them is idle at other times.)
 
- - Maximum transmitted packet size is approx. 430 bytes
-   Maximum received packet size is approx. 1024 bytes
+ - Maximum transmitted packet size is approx. 430 bytes (NEEDS UPDATE)
+   Maximum received packet size is approx. 1024 bytes (NEEDS UPDATE)
 
  - Doesn't even pretend to adhere to the USB spec!
    May not work with all USB devices.
 
- - Receiver is single-ended and uses a fixed clock rate.
+ - Full speed receiver is single-ended and uses a fixed clock rate.
    Does not tolerate line noise well, so use short USB
    cables if you must use a cable at all.
 
@@ -95,8 +97,9 @@ Limitations and Caveats
  - SOF packets do not have an incrementing frame number
    SOF packets may not be sent on-time due to other traffic
 
- - We don't detect TX/RX buffer overruns. If it hurts,
-   don't do it. (Also, do not use this HC with untrusted
+ - We don't detect TX buffer overruns. If it hurts,
+   don't do it. The RX has some protections against overrun,
+   mostly untested. (Also, do not use this HC with untrusted
    devices- a babble condition can overwrite cog memory.)
 
 Theory of Operation
@@ -119,12 +122,82 @@ generator hardware. It's programmed in "VGA" mode to send two-byte
 "pixels" to the D+/D- pins every 8 clock cycles. We pre-calculate
 a buffer of "video" data representing each transmitted packet.
 
-Receiving is harder- there's no hardware to help. In software, we
-can test a port and shift its value into a buffer in 8 clock cycles,
-but we don't have time to do anything else. So we can receive bursts
-that are limited by cog memory. To receive continuously, this module
-uses two receive cogs, and carefully interleaves them. Each cog
-receives 16 bits at a time.
+The receiver gets some help from the counters. At 80MHz we have
+20 clocks or 5 instructions for every 3 bits. The counter
+can store incoming bits by adding them to the PHS register.
+The cog must do the shifting. So, 3 of the 5 instructions
+are committed to shifting the FRQ register. We can use the other
+2 for things like reading and storing the incoming data.
+This ratio between clocks and instructions makes it harder to
+fill a 32 bit long. We store 30 bits per long to keep things
+simple.
+
+A slight complication of using the counter as an input shift
+register is that we should add each bit exactly once. The
+logic A&B mode works well. A counter in duty mode produces pulses
+one clock wide at a configurable frequency and phase, exactly
+what we need to sample the input once per bit.  We have to use a
+pin to route the sampling clock from one counter to another.
+
+We use this pin for some additional functions as well:
+ *  Waking the RX cog with waitpxx to avoid polling hub ram.
+ *  Signals the receiver to start so we don't need to calculate a wakeup time.
+ *  Used as a watchdog timer for the LS receiver.
+ *  Enables faster upload to hub by using timers to increment address.
+
+USBNC pin in FULL speed mode
+
+ ________----------______||||||||||||||_____|_|_|_|_|_|______
+         + Rising edge from TX cog wakes the RX cog
+            + RX cog checks hub ram for the current speed
+                   + Falling edge from TX cog enables receiver code
+                         + RX cog CTRA generates 12MHz sampling pulses
+                                            + RX cog CTRA generates 5MHz
+                                              pulses to advance hub address
+
+USBNC pin in  LOW speed mode
+________----------_____----------__________|_|_|_|_|_|______
+         + Rising edge from TX cog wakes the RX cog
+            + RX cog checks hub ram for the current speed
+                   + Falling edge from TX cog enables receiver code
+                        + RX cog CTRA is started as watchdog
+                                  + CTRA switched off when EOP received
+                                  + or, watchdog timer expires
+                                            + RX cog CTRA generates 5MHz
+                                              pulses to advance hub address
+
+In USB FS receive:
+   CTRA produces 12 MHz pulses in duty mode.
+
+While receiving LS data:
+    CTRA is used in NCO mode to act as a watchdog timer for the LS receiver.
+
+While uploading data to hub:
+   CTRA produces  5 MHz pulses in duty mode.
+   CTRB adds 4 the hub address for each pulse received.
+
+
+
+The low speed receiver was designed with the following goals:
+ 1. Small size
+ 2. Easy to write
+ 3. Wide bitrate tolerance
+Low speed devices may use resonators, which are less accurate than crystals.
+The USB spec allows 1.5 % tolerance for low speed devices.
+Host controllers must be within 0.05 %.
+Some code written for USB device receivers may assume this tight tolerence.
+To be a reliable host controller, we need to accept the wider 1.5 % range.
+This receiver can theoretically tolerate 5.0 % error.
+
+It is possible to receive and un-stuff low speed USB in real time. The codes
+that do this are longer and may not have the bitrate tolerance we want.
+Also, longer code reduces the size of the full speed receive buffer.
+
+Instead of trying to sample the bits, we measure the time between transitions.
+Then we calculate how many bits fit between the transitions.
+This post-processing time is roughly equal to the reception time.
+
+
 
 The other demanding operation we need to perform is a data IN
 transfer. We need to transmit a token, receive a data packet, then
@@ -183,7 +256,7 @@ can be invoked conditionally based on the device's class(es).
 }}
 
 CON
-  NUM_COGS = 3
+  NUM_COGS = 2
 
   ' Transmit / Receive Size limits.
   '
@@ -194,7 +267,7 @@ CON
   ' Note that if TX_BUFFER_WORDS is too large the error is detected at compile-time, but
   ' if RX_BUFFER_WORDS is too large we won't detect the error until Start is running!
 
-  TX_BUFFER_WORDS = 205
+  TX_BUFFER_WORDS = 200
   RX_BUFFER_WORDS = 256
 
   ' Maximum stored configuration descriptor size, in bytes. If the configuration
@@ -210,6 +283,9 @@ CON
 
   DMINUS = 0
   DPLUS = 1
+
+  ' This no-connect pin is used for cog to cog and counter to counter signalling.
+  USBNC = 8
 
   ' This module can be very challenging to debug. To make things a little bit easier,
   ' there are several places where debug pin masks are OR'ed into our DIRA values
@@ -515,7 +591,7 @@ DAT
 PUB Start
 
   '' Starts the software USB host controller, if it isn't already running.
-  '' Requires 3 free cogs. May abort if there aren't enough free cogs, or
+  '' Requires 2 free cogs. May abort if there aren't enough free cogs, or
   '' if we run out of recycled memory while allocating buffers.
   ''
   '' This function typically doesn't need to be invoked explicitly. It will
@@ -534,17 +610,21 @@ PUB Start
   txp_portc    := @portc
   txp_result   := @txc_result
   txp_rx1_time := @rx1_time
-  txp_rx2_time := @rx2_time
-  rx2p_sop     := @rx2_sop
+'  txp_rx2_time := @rx2_time
+'  rx2p_sop     := @rx2_sop
+  rx1p_sop     := @rx2_sop
 
-  txp_rxdone   := rx1p_done   := rx2p_done   := @rxdone
-  txp_rxbuffer := rx1p_buffer := rx2p_buffer := alloc(constant(RX_BUFFER_WORDS * 4))
+'  txp_rxdone   := rx1p_done   := rx2p_done   := @rxdone
+'  txp_rxbuffer := rx1p_buffer := rx2p_buffer := alloc(constant(RX_BUFFER_WORDS * 4))
+  txp_rxdone   := rx1p_done   := @rxdone
+  txp_rxbuffer := rx1p_buffer := alloc(constant(RX_BUFFER_WORDS * 4))
 
-  if cognew(@controller_cog, @txc_command)<0 or cognew(@rx_cog_1, @rx1_time)<0 or cognew(@rx_cog_2, @rx2_time)<0
+'  if cognew(@controller_cog, @txc_command)<0 or cognew(@rx_cog_1, @rx1_time)<0 or cognew(@rx_cog_2, @rx2_time)<0
+  if cognew(@controller_cog, @txc_command)<0 or cognew(@rx_cog_1, @rx1_time)<0
     abort E_OUT_OF_COGS
 
   ' Before we start scribbling over the memory we allocated above, wait for all cogs to start.
-  repeat while txc_result or rx1_time or rx2_time
+  repeat while txc_result or rx1_time
 
   isRunning~~
 
@@ -1147,7 +1227,11 @@ PUB ReadDataIN(token, buffer, length, togglePtr, txrxFlag, tokenRetries, crcRetr
     '
     '    offset = (headerBits + crcBits + roundingBits) * 8 - 4 = 284
 
-    result := (RequestDataIN(token, txrxFlag, togglePtr, tokenRetries) - rx2_sop - 284) ~> 3
+    ' new offset for 80MHz clock   6 2/3 clocks per bit
+    '    offset = (headerBits + crcBits + roundingBits) * (20/3) - 4 = 236
+
+
+    result := ((RequestDataIN(token, txrxFlag, togglePtr, tokenRetries) - rx2_sop - 236)*3)/20
 
     if result =< 0
       result~ ' Zero-length packet. Device ended the transfer early
@@ -1195,7 +1279,7 @@ PUB SendToken(pid, token, delayAfter)
 
 PUB LastPIDError
   '' Return the raw 16-bit frame from the last E_PID error
-  
+
   return last_pid_err
 
 
@@ -1318,7 +1402,7 @@ cmdret
               ' Reduce jitter between spin code and the USB packets, for experiments where that matters
               waitvid   v_palette, v_idle
               waitvid   v_palette, v_idle
-              
+
               wrlong    c_zero, par
               andn      outa, c_00010000
 
@@ -1412,7 +1496,7 @@ cmd_tx_begin
 
 cmd_tx_end
               call      #encode_eop
-:idle_loop    
+:idle_loop
               test      l_cmd, #$1FF wz
         if_z  jmp       #cmdret
               call      #encode_idle
@@ -1602,6 +1686,28 @@ txrx
 
               rcr       l_cmd, #1 wc            ' C = bit0 = RX Enable
 
+              ' The RX cog clock pin can be reused as a wakeup pin.
+              ' This is great because we don't have to calculate the wakup time
+              ' and we save power by using waitpeq instead of looping.
+              or        dira, tx_ncmask        ' Maybe put this somewhere else
+              or        outa, tx_ncmask        ' Get ready for falling edge later
+
+              ' Right now tx_count_raw is the number of bits
+              ' in the packet. Convert it to a loop count we can
+              ' use to line up our EOP with the video generator phase.
+              ' We must multiply by 1 2/3 for 80MHz
+              ' instead of 2 for 96MHz.
+              ' approximated by 1 3/4
+              ' peak error +1 or -1 instruction
+
+              add       tx_count_raw, #15       ' 0 -> 16
+              and       tx_count_raw, #%1111    ' Period is 16 bits
+              mov       t1,tx_count_raw
+              shr       t1, #1                  '
+              add       tx_count_raw,t1         ' 1/2
+              shr       t1, #1                  '
+              add       tx_count_raw,t1         ' 1/4
+
               ' Transmitter startup: We need to synchronize with the video PLL,
               ' and transition from an undriven idle state to a driven idle state.
               ' To do this, we need to fill up the video generator register with
@@ -1609,28 +1715,17 @@ txrx
               '
               ' Since we own the bus at this point, we don't have to hurry.
 
+              ' This section was relocated because the extra math involved
+              ' for 80MHz operation was running causing the video generator
+              ' to run out of data and transmit garbage on the bus.
+              ' May not apply with pin wakeup
+              ' Make sure there are no more than XX instructions between waitvids.
+
               mov       vscl, vscl_value                ' Back to normal video speed
               waitvid   v_palette, v_idle
               waitvid   v_palette, v_idle
               movs      vcfg, #BUS_MASK
               or        dira, #DEBUG_TX_MASK | BUS_MASK
-
-              ' Give the receiver cogs a synchronized timestamp to wake up at.
-
-              mov       t1, tx_count_raw
-              shl       t1, #3                  ' 8 cycles per bit
-              add       t1, #$64                ' Constant offset, > EOP + bus settling, < reply
-              add       t1, cnt
-        if_c  wrlong    t1, txp_rx1_time
-        if_c  wrlong    t1, txp_rx2_time
-
-              ' Right now tx_count_raw is the number of bits
-              ' in the packet. Convert it to a loop count we can
-              ' use to line up our EOP with the video generator phase.
-
-              add       tx_count_raw, #15       ' 0 -> 16
-              and       tx_count_raw, #%1111    ' Period is 16 bits
-              shl       tx_count_raw, #1        ' 2 iters per bit
 
               ' Transmit our NRZI-encoded packet.
               '
@@ -1650,6 +1745,7 @@ txrx
 
 :tx_loop_last mov       :tx_inst2, :tx_inst1    ' Copy last address
               mov       :tx_inst3, :tx_inst1
+    if_c      andn      outa, tx_ncmask         ' Falling edge enables RX cog
 
               ' The last word is special, since we need to stop driving the bus
               ' immediately after the video generator clocks out our EOP bits.
@@ -1735,14 +1831,14 @@ txrx
         if_nz andn      dira, #BUS_MASK
         if_nz andn      outa, #BUS_MASK
 
-              ' Initialize the decoder, point it at the top of the RX buffer.
-              ' The decoder will load the first long on our first invocation.
+              ' Initialize the decoder, load the first long into the shift register.
+              ' Add the first zero to the sync byte since the receiver misses it.
 
               mov       dec_rxbuffer, txp_rxbuffer
-              mov       dec_nrzi_cnt, #1        ' Mod-32 counter
-              mov       dec_nrzi_st, #0
+              mov       dec_nrzi_cnt, #31        ' 31 bits for first long
               mov       dec_1cnt, #0
               rdlong    dec_nrzi, dec_rxbuffer
+              shl       dec_nrzi,#1              ' add the implied zero
               add       dec_rxbuffer, #4
 
 :rx_done
@@ -1935,8 +2031,8 @@ encode_eop_ret ret
 
               ' Decode (retrieve, NRZI, bit un-stuff) up to 32 bits.
               '
-              ' The data to decode comes from the RX buffer in hub memory.
-              ' We decode 'codec_cnt' bits into the *MSBs* of 'codec_buf'.
+              ' The NRZI decoding is now done in the rx cog.
+              ' We still need to remove stuffed bits and calculate CRC-16.
               '
               ' As with encoding, we also run a CRC-16 here, since it's
               ' a convenient place to do so.
@@ -1947,40 +2043,23 @@ encode_eop_ret ret
 decode
               sub       t1, #1
 
-              ' Extract the next bit from the receive buffer.
-              '
-              ' Our buffering scheme is a bit strange, since we need to have
-              ' a 32-bit look ahead buffer at all times, for pseudo-EOP detection.
-              '
-              ' So, we treat 'dec_nrzi' as a 32-bit shift register which always
-              ' contains valid bytes from the RX buffer. It is pre-loaded with the
-              ' first word of the receive buffer.
-              '
-              ' Once every 32 decoded bits (starting with the first bit) we load a
-              ' new long from dec_rxbuffer into dec_rxlatch. When we shift bits out
-              ' of dec_nrzi, bits from dec_rxlatch replace them.
+              ' Variables redefined since previous versions:
+              ' dec_nrzi_cnt   = number of bits remaining in dec_nrzi
+              ' dec_nrzi       = shift register
 
-              ror       dec_nrzi_cnt, #1 wc
-        if_c  rdlong    dec_rxlatch, dec_rxbuffer
-        if_c  add       dec_rxbuffer, #4
-              rcr       dec_rxlatch, #1 wc
-              rcr       dec_nrzi, #1 wc
-
-              ' We use a small auxiliary shift register to XOR the current bit
-              ' with the last one, even across word boundaries where we might have
-              ' to reload the main shift register. This auxiliary shift register
-              ' ends up tracking the state ("what was the last bit?") for NRZI decoding.
-
-              rcl       dec_nrzi_st, #1
+              rcr       dec_nrzi, #1 wc        ' shift new bit to c
+              sub       dec_nrzi_cnt, #1 wz    ' count bits remaining
+        if_z  rdlong    dec_nrzi, dec_rxbuffer ' reload if necessary
+        if_z  add       dec_rxbuffer, #4
+        if_z  mov       dec_nrzi_cnt, #30
 
               cmp       dec_1cnt, #6 wz         ' Skip stuffed bits
         if_z  mov       dec_1cnt, #0
         if_z  jmp       #decode
 
-              test      dec_nrzi_st, #%10 wz    ' Previous bit
-              shr       codec_buf, #1
-    if_c_ne_z or        codec_buf, c_80000000   ' codec_buf <= !(prev XOR current)
+              rcr       codec_buf, #1            ' add new data at bit 31
               test      codec_buf, c_80000000 wz ' Move decoded bit to Z
+
 
     if_nz     add       dec_1cnt, #1            ' Count consecutive '1' bits
     if_z      mov       dec_1cnt, #0
@@ -2006,7 +2085,7 @@ txp_portc     long      0
 txp_result    long      0
 txp_rxdone    long      0
 txp_rx1_time  long      0
-txp_rx2_time  long      0
+'txp_rx2_time  long      0
 txp_rxbuffer  long      0
 
 ' Constants
@@ -2020,16 +2099,16 @@ c_dest_1      long      1 << 9
 c_condition   long      %000000_0000_1111_000000000_000000000
 c_bus_mask    long      BUS_MASK
 
-reset_period  long      96_000 * 10
+reset_period  long      80_000 * 10
 
-frqa_value    long      $10000000                       ' 1/8
-ctra_value    long      (%00001 << 26) | (%111 << 23)   ' PLL 1:1
+frqa_value    long      $13333333                       ' 6MHz
+ctra_value    long      (%00001 << 26) | (%111 << 23)   ' PLL x16  96MHz
 vcfg_value    long      (%011 << 28)                    ' Unpack 2-bit -> 8-bit
-vscl_value    long      (8 << 12) | (8 * 16)            ' Normal 8 clocks per pixel
-vscl_turbo    long      (1 << 12) | (1 * 16)            ' 1 clock per pixel
+vscl_value    long      (8 << 12) | (8 * 16)            ' Normal 8 clocks per pixel, 16 bits/frame
+vscl_turbo    long      (1 << 12) | (1 * 16)            ' 1 clock per pixel, 2 bit times/frame
 v_palette     long      (BUS_MASK << 24) | (STATE_J << 16) | (STATE_K) << 8
 v_idle        long      %%2222_2222_2222_2222
-
+tx_ncmask     long      |<USBNC
 ' Pre-encoded ACK sequence:
 '
 '    SYNC     ACK      EOP
@@ -2077,8 +2156,8 @@ eopwait_iters long      ((RX_BUFFER_WORDS * 32) + 128)
 ' Since we're not even trying to support very timing-sensitive devices, we
 ' also send a fake (non-incrementing) frame number.
 
-sof_frame     long      %00010_00000000000_1010_0101    ' SOF PID, Frame 0, valid CRC6
-sof_period    long      96_000                          ' 96 MHz, 1ms
+sof_frame     long      %00010_00000000000_1010_0101    ' SOF PID, Frame 0, valid CRC5
+sof_period    long      80_000                          ' 80 MHz, 1ms
 
 ' Encoder only
 enc_nrzi      res       1                               ' Encoded NRZI shift register
@@ -2088,16 +2167,15 @@ enc_crc16     res       1
 
 ' Decoder only
 dec_nrzi      res       1                               ' Encoded NRZI shift register
-dec_nrzi_cnt  res       1                               ' Cyclic bit counter
-dec_nrzi_st   res       1                               ' State of NRZI decoder
+dec_nrzi_cnt  res       1                               ' Bit counter
 dec_1cnt      res       1
 dec_rxbuffer  res       1
-dec_rxlatch   res       1
 dec_crc16     res       1
 
 tx_count_raw  res       1
 t3            res       1
 
+led_tmp       res 1 ' FIXME
 tx_buffer     res       TX_BUFFER_WORDS
 
               fit
@@ -2107,31 +2185,86 @@ tx_buffer     res       TX_BUFFER_WORDS
 ' Receiver Cog 1
 '==============================================================================
 
-' This receiver cog stores the first 16-bit half of every 32-bit word.
+' This receiver cog stores 30 bits of data in each long.
+' Also performs NRZI decoding.
+'
+' The first bit is missed compared to previous receiver code.
+' Sync shows as 0x40, we compensate for this in the decoder.
+'
+' Parameters:
+'      par (rx1_time)  set to zero by this cog on startup
+'                      set nonzero by controller cog with trigger time
+'                      immediately reset to zero for one-shot action
+
+'      rx1p_done   =   set nonzero by controller cog when before activating receivers
+'                      set to zero when pseudo-eop is detected
+
+'      rx1p_buffer = hub address for receive buffer, same to rx1 and rx2
+
+'      rx1p_sop    = timestamp measured for SOP (Start of Packet)
+
+'      rx1_zero    = literal zero for use from D operand
+
+
+' We store the entire packet in cog ram since there is no time
+' for hub access while receiving.
+' This shouldn't be a problem since USB 1.1 specifies a maximum
+' payload size of 1023 bytes.
+
+' We have only one RX cog right now, but the RX1/RX2 notation remains in
+' case we want to return to interleaved receivers. This could allow
+' un-stuffing and CRC-16 to run on another cog while reception is
+' in progress.
 
               org
 rx_cog_1
               wrlong    rx1_zero, par           ' Notify Start() that we're running.
+
 :restart
-              mov       rx1_buffer, rx1p_buffer
+              ' Initial conditions for counters
+              mov frqb , #0       ' PHSB is set later
+              mov ctrb, ctr_data  ' accumulate when sampling pulse and data
+
+              mov frqa , #0
+              mov phsa, phs_usb
+              mov ctra, ctr_usb   ' duty output on NC pin
+              ' We need to ensure that we output
+              ' low to the NC pin or this will prevent
+              ' us from receiving wakeup pulses from
+              ' the TX cog.
+              mov dira, rx1_nc
+
+
+              ' FIXME We count by longs, not bytes.
+              ' The math works out anyway.
               mov       rx1_iters, #RX_BUFFER_WORDS
 
-              ' On the very first iteration, we apply a tiny phase tweak
-              ' to adjust the sampling location to the center of each
-              ' bit. The RX2 cog can take this into account when calculating
-              ' its first sample time, but since the RX1 cog needs to start
-              ' sampling immediately, we save this phase shift for the second
-              ' sampling iteration. This means that the first iteration will
-              ' have somewhat lousier phase alignment than the rest.
+              ' The sampling loop is pipelined so the
+              ' first "received raw data" is actually the
+              ' initial conditions set here. We define this
+              ' to be (1<<29) to feed the NRZI decoder the
+              ' initial one that our sampling loop missed.
 
-              movs      :rx1_period, #(16*8 - 10)
+              ' The NRZI decoder outputs undefined data for
+              ' the first long because oldraw is not initialized.
+              ' That's ok, we don't even copy it to hub ram.
 
-:wait         rdlong    t2, par wz              ' Read trigger timestamp
-        if_z  jmp       #:wait
-              wrlong    rx1_zero, par           ' One-shot, zero it.
+              ' The first raw data is (newphs-oldphs).
+              ' We set oldphs to zero because it's convenient.
 
-              waitcnt   t2, #0                  ' Wait for trigger time
+              mov newphs,d_first
+              mov phsb,newphs      ' load the counter with our known value
+              mov oldphs,#0
+              mov dptr, #databuf
 
+
+
+              ' The TX cog lowers our clock pin before sending the last word.
+              ' We then wait for the SE0 end of packet signal and activate the
+              ' receiver.
+
+              waitpeq rx1_nc,rx1_nc ' trigger on falling edge
+              waitpne rx1_nc,rx1_nc ' trigger on falling edge
 
               ' Now synchronize to the beginning of the next packet.
               ' We sample only D- in the receiver. If we time out,
@@ -2139,90 +2272,199 @@ rx_cog_1
               ' to bring us out of sleep. (We'd rather not send a SE0,
               ' since we may inadvertently reset the device.)
 
-              waitpne   rx1_zero, rx1_pin
+              ' The receiver must start in the narrow window
+              ' between the SE0 sent at end of packet and sync byte
+              ' at the beginning of the received packet.
 
+              ' The TX cog triggers us a little early
+              ' so we wait for SE0 before activating the receiver.
+              waitpeq   rx1_zero, #3  ' wait for EOP
+
+              ' We should have time to do this here since USB spec
+              ' require minimum of 2 bit times before next packet.
+              mov frqb , #1 '0    ' get timer ready to receive data
+
+              waitpne   rx1_zero, rx1_dminus   ' sync to rising edge
+        mov frqa, frq_usb   ' turn on sampling clock
+                        mov rx1_cnt, cnt       ' save SOP time
+        shl frqb,#1 '1
+                        sub rx1_cnt, #4        ' adjust SOP timestamp
 :sample_loop
-              test      rx1_pin, ina wc         '  0
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  1
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  2
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  3
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  4
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  5
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  6
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  7
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  8
-              rcr       t2, #1
-              test      rx1_pin, ina wc         '  9
-              rcr       t2, #1
-              test      rx1_pin, ina wc         ' 10
-              rcr       t2, #1
-              test      rx1_pin, ina wc         ' 11
-              rcr       t2, #1
-              test      rx1_pin, ina wc         ' 12
-              rcr       t2, #1
-              test      rx1_pin, ina wc         ' 13
-              rcr       t2, #1
-              test      rx1_pin, ina wc         ' 14
-              rcr       t2, #1
-              test      rx1_pin, ina wc         ' 15
-              rcr       t2, #1
+        shl frqb,#1 '2
+' quantum break
+        shl frqb,#1 '3
+                        mov newraw, newphs     ' set up to subtract
+        shl frqb,#1 '4
+                        sub newraw, oldphs wz  ' extract new data, detect pEOP
+        shl frqb,#1 '5
+' quantum break
+        shl frqb,#1 '6
+                        if_z jmp #:rx_done   ' exit quickly on pEOP
+        shl frqb,#1 '7
+                        movd :wr, dptr
+        shl frqb,#1 '8
+' quantum break
+        shl frqb,#1 '9
+                        add dptr, #1
+        shl frqb,#1 '10
+                        mov datalong, newraw ' start of nrzi decoder
+        shl frqb,#1 '11
+' quantum break
+        shl frqb,#1 '12
+                        shr oldraw, #29      ' get last bit of old data
+        shl frqb,#1 '13
+                        and oldraw, #1       ' destructively
+        shl frqb,#1 '14
+' quantum break
+        shl frqb,#1 '15
+                        shl datalong, #1     ' make room for last bit
+        shl frqb,#1 '16
+                        add datalong, oldraw ' add the last bit on
+        shl frqb,#1 '17
+' quantum break
+        shl frqb,#1 '18
+                        xor datalong, newraw   ' find transitions
+        shl frqb,#1 '19
+                        xor datalong,data_mask ' invert
+        shl frqb,#1 '20
+' quantum break
+        shl frqb,#1 '21
+                        nop
+        shl frqb,#1 '22
+                        nop
+        shl frqb,#1 '23
+' quantum break
+        shl frqb,#1 '24
+                        nop
+        shl frqb,#1 '25
+:wr                     mov 0, datalong ' store data
+        shl frqb,#1 '26
+' quantum break
+        shl frqb,#1 '27
+                        mov oldraw,newraw
+        shl frqb,#1 '28
+                        mov oldphs,newphs
+        shl frqb,#1 '29
+' quantum break
+        mov frqb,#1 '0
+                        mov newphs,phsb ' read data, bit 0 not yet included
+        shl frqb,#1 '1
+                        djnz rx1_iters,#:sample_loop
+      ' shl frqb,#1 '2  after jump
 
-              ' At this exact moment, the RX2 cog takes over sampling
-              ' for us. We can store these 16 bits to hub memory, but we
-              ' need to use a waitcnt to resynchronize to USB after
-              ' waiting on the hub.
+              ' We don't have time to read and clear phsb without
+              ' loosing a bit. Thankfully, addition is reversible
+              ' so all we need to do is read.
+
+:rx_done
+              mov frqa, #0      ' stop sample clock
+
+              movd :zwr, dptr   ' set D to add terminating zero to buffer
+              mov frqb, #0      ' stop accum, also a delay between movd and mov
+:zwr          mov 0,#0          ' write zero at end
+' databuf[0] is written with dummy data
+' databuf[1] contains first real data, [31:30] undefined, [29:0] NRZI decoded
+' databuf[n] is written with 0 on pEOP
+
+
+
+              ' Data received, now copy the data to hub ram.
               '
-              ' The loop period here is different for the first and the
-              ' other iterations. See above.
-              '
-              ' This constant must be carefully adjusted so that the period
-              ' of this loop is exactly 32*8 cycles. For reference, we can
-              ' compare the RX1 and RX2 periods to make sure they're equal.
+              mov loopcnt,dptr          ' calculate how many
+              sub loopcnt,#databuf      ' longs we received
+              ' loopcnt is number of longs including terminating 0
 
-              mov       rx1_cnt, cnt
-:rx1_period   add       rx1_cnt, #0
-              movs      :rx1_period, #(16*8 - 9)
+              movd :hublp,#databuf      ' set cog start address
+              add :hublp, d_by_one      ' skip dummy long at start
 
-              shr       t2, #16
-              wrword    t2, rx1_buffer
-              add       rx1_buffer, #4
+              mov ctrb, ctr_clock       ' accumulate with sampling pulse only
 
-              ' Stop either when we fill up the buffer, or when RX2 signals
-              ' that it's detected a pseudo-EOP and set RX_DONE.
+              ' save the SOP timestamp  and synchronize with hub
+              wrlong    rx1_cnt, rx1p_sop
+              mov phsa, phs_hub         ' initial offset for
+              mov phsb, rx1p_buffer     ' set hub start address
 
-              sub       rx1_iters, #1 wz
-   if_nz      rdbyte    t2, rx1p_done wz
-   if_z       jmp       #:restart
+              ' Signal that we are done even though
+              ' we have yet to copy the data.
+              ' The decode cog won't catch us.
+              wrbyte    rx1_zero, rx1p_done
+              mov frqb, #4              ' increment by longs
+              mov frqa, frq_hub         ' enable clock to ctrb
+              ' Copy the data longs.
+:hublp        wrlong 0, phsb            ' counter increments hub address
+              add :hublp, d_by_one      ' increment cog mem address
+              djnz loopcnt,#:hublp
 
-              waitcnt   rx1_cnt, #0
-              jmp       #:sample_loop
+              mov frqa, #0 ' stop sample clock
+              mov frqb, #0 ' stop accumulator
 
-rx1_pin       long      |< DMINUS
+        ' Debug code for quickstart LEDs
+    '  mov cnttmp,databuf+1
+'      mov t2, rx1p_buffer
+'      add t2,#0
+'      rdlong cnttmp,t2
+   '   mov cnttmp,phsb
+ '     shr cnttmp,#7
+  '    and cnttmp,#$ff
+   '   shl cnttmp,#16
+'      mov outa,cnttmp
+
+
+              jmp       #:restart
+
+rx1_dminus    long      |< DMINUS
 rx1_zero      long      0
+rx1_nc        long      |< USBNC
+
+
+ctr_usb       long      (%00110_000 << 23) + (USBNC) 'duty out
+' Adjusting the starting phase may require the
+' sampling loop to be modified.
+' USB start phase was adjusted using scope to place
+' the sampling pulses in the center of the USB bits.
+phs_usb       long      $2666_6666*5  ' starting phase
+frq_usb       long      $2666_6666    ' 12 MHz pulses for USB
+
+
+phs_hub       long      $8000_0000    ' Not sure if this is critical
+frq_hub       long      $1000_0000    ' 1/16 clock rate
+' ctr_data  is used to sample USB data
+' ctr_clock is used to increment hub address
+ctr_data      long      (%11000_000 << 23) + (USBNC) + (DMINUS<<9)
+ctr_clock     long      (%11010_000 << 23) + (USBNC)
+
+d_by_one      long      (1<<9)
+data_mask     long      $3FFF_FFFF  ' bits 29-0
+d_first       long      (1<<29)     ' initial condition for NRZI decoder
 
 ' Parameters that are set up by Spin code prior to cognew()
 rx1p_done     long      0
 rx1p_buffer   long      0
+rx1p_sop      long      0
 
-rx1_buffer    res       1
-rx1_cnt       res       1
+'rx1_buffer    res       1           ' we store this in phsb now
+rx1_cnt       res       1            ' stores SOP timestamp
 rx1_iters     res       1
 t2            res       1
+loopcnt       res       1
+newphs        res       1
+oldphs        res       1
+
+dptr          res       1
+newraw        res       1
+oldraw        res       1
+datalong      res       1
+cnttmp        res       1
+databuf       res     270
 
               fit
 
 
+{{  ' RX2 not used
 '==============================================================================
 ' Receiver Cog 2
 '==============================================================================
+' This receiver cog is not used right now.
 
 ' This receiver cog stores the second 16-bit half of every 32-bit word.
 '
@@ -2332,6 +2574,7 @@ rx2_cnt       res       1
 t4            res       1
 
               fit
+}}          ' RX2 not used
 
 heap_end    ' Begin recyclable memory heap
 
