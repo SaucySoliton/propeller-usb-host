@@ -1,7 +1,12 @@
 Propeller USB Host
 ------------------
 
-This is a bit-banging USB host controller (full-speed mode) for the Parallax Propeller microcontroller.
+This is a bit-banging USB host controller for the Parallax Propeller microcontroller.
+It uses the standard 80 MHz clock. Both full-speed and low-speed devices are supported. 
+
+Detailed information about this code is available in usb-fs-host.spin. 
+
+
 
 See this blog post for more:
 
