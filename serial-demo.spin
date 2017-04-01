@@ -13,7 +13,7 @@ CON
   
 OBJ
   spp : "bluetooth-serial"
-  term : "tv_text"
+  term : "Parallax Serial Terminal"
 
 DAT
 
@@ -32,7 +32,7 @@ splashScreen
         byte $0
 
 PUB main | tmp
-  term.start(12)
+  term.start(115200)
 
   ' Start the Bluetooth stack, report errors
   if tmp := \spp.start
@@ -46,7 +46,7 @@ PUB main | tmp
     tmp := spp.charIn
 
     ' Echo each character to the TV
-    term.out(tmp)
+    term.char(tmp)
 
     ' Verbosely echo it back over Bluetooth   
     spp.str(string("You pressed: "))

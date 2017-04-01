@@ -8,7 +8,7 @@ OBJ
   bt : "bluetooth-host"
   rx : "bluetooth-ring"
   tx : "bluetooth-ring"
-  term : "tv_text"
+  term : "Parallax Serial Terminal"
 
 VAR
   word  socket
@@ -21,7 +21,7 @@ VAR
   long  bps
   
 PUB main
-  term.start(12)
+  term.start(115200)
 
   term.str(string("Starting Bluetooth... "))
   if showError(\bt.Start, string("Can't start Bluetooth host"))
@@ -48,7 +48,7 @@ PUB main
 PRI terminal | tmp
   repeat
     if (tmp := rx.RxCheck) > 0
-      term.out(tmp)
+      term.char(tmp)
 
 PRI echoServer | tmp
   repeat
@@ -64,10 +64,10 @@ PRI debug | t
   bpsDeadline := cnt
   
   repeat
-    term.out($a)
-    term.out(0)
-    term.out($b)
-    term.out(3)
+    term.char($a)
+    term.char(0)
+    term.char($b)
+    term.char(3)
 
     ' Raw socket struct
     t := socket
@@ -75,7 +75,7 @@ PRI debug | t
     repeat 5
       term.hex(WORD[t], 4)
       t += 2
-      term.out(" ")
+      term.char(" ")
 
     ' Raw ring struct
     t := rx.Ring
@@ -83,7 +83,7 @@ PRI debug | t
     repeat 4
       term.hex(WORD[t], 4)
       t += 2
-      term.out(" ")
+      term.char(" ")
 
     ' Temporary debugging
     t := $4000
@@ -91,14 +91,14 @@ PRI debug | t
     repeat 6
       term.hex(WORD[t], 4)
       t += 2
-      term.out(" ")
+      term.char(" ")
 
     ' count and show error codes
     term.str(string(13, "Errors: "))
     if t := bt.GetLastError
       errCount++
       term.dec(errCount)
-      term.out(" ")
+      term.char(" ")
       term.dec(t)
                             
     ' Incoming data
@@ -128,12 +128,12 @@ PRI showDiscovery | i, count
     
     if count
       repeat i from 0 to count - 1
-        term.out($A)
-        term.out(0)
-        term.out($B)
-        term.out(3+i)
+        term.char($A)
+        term.char(0)
+        term.char($B)
+        term.char(3+i)
         term.str(bt.AddressToString(bt.DiscoveredAddr(i)))
-        term.out(" ")
+        term.char(" ")
         term.hex(bt.DiscoveredClass(i), 6)
   
 PRI showError(error, message) : bool
